@@ -16,6 +16,9 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
+// Respect X-Forwarded-* headers when behind proxies / Docker / reverse proxies
+app.set('trust proxy', true);
+
 // ---- Config ----
 const PORT = process.env.PORT || 8080;
 const SESSION_SECRET = process.env.SESSION_SECRET || 'change-me-please';
