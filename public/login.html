@@ -2,7 +2,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Login</title>
 <link rel="stylesheet" href="/assets/styles.css">
-</head><body onload="loadBrand()">
+</head><body >
 <div class="header">
   <div class="brand"><img class="brand-logo" style="height:24px"><div class="brand-title">File Management</div></div>
   <div class="right"></div>
@@ -13,7 +13,7 @@
     <div id="err" class="muted" style="display:none;margin-bottom:8px"></div>
     <input type="password" id="pw" placeholder="Password" />
     <div style="display:flex;gap:8px;margin-top:10px">
-      <button class="btn" onclick="document.getElementById('pw').value=''">Clear</button>
+      <button type="button" class="btn" onclick="document.getElementById('pw').value=''">Clear</button>
       <button class="btn blue" onclick="doLogin()">Login</button>
     </div>
   </div>
@@ -22,6 +22,8 @@
 <div class="toast"></div>
 <script src="/assets/common.js"></script>
 <script>
+window.addEventListener("DOMContentLoaded", ()=>{ try{ loadBrand(); }catch(e){} });
+
 async function doLogin(){
   const pw = document.getElementById('pw').value;
   try{
