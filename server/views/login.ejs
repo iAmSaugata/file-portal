@@ -11,9 +11,7 @@
   <div class="login-wrap">
     <div class="card login-card">
       <h2 class="login-title">Login</h2>
-      <% if (error) { %>
-        <div class="panel" style="color:#b91c1c; margin-bottom:10px"><%= error %></div>
-      <% } %>
+      <% if (error) { %><div class="panel" style="color:#b91c1c; margin-bottom:10px"><%= error %></div><% } %>
       <form method="post" action="/login">
         <div style="display:flex; flex-direction:column; gap:10px;">
           <input type="password" name="password" placeholder="Password" required style="padding:10px 12px; border:1px solid #d1d5db; border-radius:10px;"/>
@@ -24,7 +22,7 @@
           </div>
         </div>
       </form>
-      <div class="footer"><b><b><%= footerText %></b></b></div>
+      <div class="footer"><b><%= footerText %></b></div>
     </div>
   </div>
 </body>

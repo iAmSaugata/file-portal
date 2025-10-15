@@ -8,7 +8,6 @@ fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 const db = new Database(dbPath);
 db.pragma('journal_mode = WAL');
 
-// Schema
 db.exec(`
 CREATE TABLE IF NOT EXISTS files (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -60,7 +59,7 @@ VALUES (@file_id, @token, @created_at)
 `);
 
 export const getLink = db.prepare(`
-SELECT l.id, l.file_id, l.token, f.original_name, f.stored_name, f.size
+SELECT l.id, l.file_id, l.token, l.created_at, f.original_name, f.stored_name, f.size
 FROM links l
 JOIN files f ON f.id = l.file_id
 WHERE l.token = ?

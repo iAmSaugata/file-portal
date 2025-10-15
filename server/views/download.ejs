@@ -22,20 +22,14 @@
           <button class="btn btn-muted small" onclick="copyWget()">copy</button>
         </div>
       </div>
-      <div class="footer"><b><b><%= footerText %></b></b></div>
+      <div class="footer"><b><%= footerText %></b></div>
     </div>
   </div>
 <script>
 const url = location.origin + "/dl/<%= token %>";
 document.getElementById('u').innerText = url;
-
-function copyDirect(){
-  navigator.clipboard.writeText(url).then(()=>alert('Copied!'));
-}
-function copyWget(){
-  const t = 'wget -O "' + <%- JSON.stringify(fileName) %> + '" ' + url;
-  navigator.clipboard.writeText(t).then(()=>alert('Copied!'));
-}
+function copyDirect(){ navigator.clipboard.writeText(url).then(()=>alert('Copied!')); }
+function copyWget(){ const t = 'wget -O "' + <%- JSON.stringify(fileName) %> + '" ' + url; navigator.clipboard.writeText(t).then(()=>alert('Copied!')); }
 </script>
 </body>
 </html>
