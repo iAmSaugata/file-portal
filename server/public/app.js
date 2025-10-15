@@ -1,9 +1,9 @@
-// Dashboard interactions (search/filter, bulk delete, modal link popup)
+// Dashboard interactions
 function qs(s, el=document){ return el.querySelector(s); }
 function qsa(s, el=document){ return Array.from(el.querySelectorAll(s)); }
 
 function filterTable() {
-  const term = qs('#search').value.toLowerCase();
+  const term = (qs('#search')?.value || '').toLowerCase();
   qsa('tbody tr').forEach(tr => {
     const name = tr.dataset.name || '';
     tr.style.display = name.includes(term) ? '' : 'none';
@@ -14,7 +14,7 @@ function updateBulkState(){
   const btn = qs('#btnBulkDelete');
   if (btn) btn.disabled = !any;
 }
-function clearSearch(){ qs('#search').value = ''; filterTable(); }
+function clearSearch(){ filterTable(); }
 
 async function bulkDelete(){
   const ids = qsa('tbody input[type="checkbox"]:checked').map(cb => cb.value);
@@ -60,5 +60,5 @@ document.addEventListener('DOMContentLoaded', ()=>{
   const search = qs('#search'); if (search){ search.addEventListener('input', filterTable); }
   qsa('tbody input[type="checkbox"]').forEach(cb=> cb.addEventListener('change', updateBulkState));
   updateBulkState();
-  try { localStorage.setItem('fm_lastVisit', String(Date.now())); } catch{}
+  filterTable();
 });

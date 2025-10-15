@@ -22,10 +22,25 @@
   </style>
 </head>
 <body>
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="topbar-title">
+        <% if (brandLogo) { %><img src="<%= brandLogo %>" alt="logo"/><% } %>
+        <span><%= brandTitle %></span>
+      </div>
+      <div>
+        <a href="/logout"><button class="btn btn-signout small-compact">Sign Out</button></a>
+      </div>
+    </div>
+  </div>
+
   <div class="container">
     <div class="card" style="max-width: 980px; position: relative;">
       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px">
-        <h2 style="margin:0">Upload Files</h2>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button id="btnBack" class="btn btn-muted">Back</button>
+          <h2 style="margin:0">Upload Files</h2>
+        </div>
         <button id="btnDone" class="btn btn-primary" onclick="location.href='/dashboard'">Done</button>
       </div>
 
@@ -67,8 +82,11 @@ const picker = document.getElementById('picker');
 const btnBrowse = document.getElementById('btnBrowse');
 const btnStart = document.getElementById('btnStart');
 const btnCancel = document.getElementById('btnCancel');
+const btnBack = document.getElementById('btnBack');
 const queue = document.getElementById('queue');
 const commentsEl = document.getElementById('comments');
+
+btnBack.onclick = ()=>{ if (history.length > 1) history.back(); else location.href='/dashboard'; };
 
 let q = []; // {file, el, lastT, lastLoaded, xhr, fileId}
 let uploading = false;
@@ -101,15 +119,11 @@ function addFiles(files){
       </div>`;
     const obj = { file, el: row, lastT: Date.now(), lastLoaded:0, xhr:null, fileId:null };
     row.querySelector('.x').onclick = ()=>{ if (uploading) return; q = q.filter(e => e !== obj); queue.removeChild(row); };
-    queue.appendChild(row);
-    q.push(obj);
+    queue.appendChild(row); q.push(obj);
   }
 }
 
-btnCancel.onclick = ()=>{
-  if (!uploading){ q=[]; queue.innerHTML=''; return; }
-  const cur = q.find(x=>x.xhr); if (cur && cur.xhr) cur.xhr.abort();
-};
+btnCancel.onclick = ()=>{ if (!uploading){ q=[]; queue.innerHTML=''; return; } const cur = q.find(x=>x.xhr); if (cur && cur.xhr) cur.xhr.abort(); };
 
 btnStart.onclick = async ()=>{
   if (uploading || !q.length) return;
@@ -140,7 +154,7 @@ btnStart.onclick = async ()=>{
         if (xhr.readyState===4){
           item.xhr = null;
           if (xhr.status>=200 && xhr.status<300){
-            try{
+            try {
               const j = JSON.parse(xhr.responseText);
               if (j.ok && j.saved && j.saved.length){
                 item.fileId = j.saved[0].id;
@@ -151,8 +165,10 @@ btnStart.onclick = async ()=>{
                   if (g.ok){ await navigator.clipboard.writeText(g.directUrl); alert('Direct link copied!'); }
                 };
               }
-            }catch{}
-          } else { spd.textContent = 'failed'; }
+            } catch {}
+          } else {
+            spd.textContent = 'failed';
+          }
           resolve(true);
         }
       };

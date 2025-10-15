@@ -1,6 +1,6 @@
 /* Global Theme */
 :root{
-  --bg: #f5f7fb;
+  --bg: #6f8ff0; /* from attached image */
   --card: #ffffff;
   --primary: #1f7aec;
   --primary-weak: #a9ccff;
@@ -13,8 +13,9 @@
 
 body{
   margin:0;
+  min-height:100vh;
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-  background: linear-gradient(180deg, #f7f9fd 0%, #eef2f7 100%);
+  background: var(--bg);
   color:#111827;
 }
 
@@ -38,12 +39,11 @@ body{
 .btn:active{ transform: translateY(0); box-shadow: 0 3px 0 rgba(0,0,0,0.18); }
 
 .btn-primary{ background:#60a5fa; }
-.btn-blue{ background:#93c5fd; }  /* upload */
-.btn-danger{ background:#ef4444; } /* red */
+.btn-blue{ background:#93c5fd; }
+.btn-danger{ background:#ef4444; }
 .btn-muted{ background:#e5e7eb; color:#111; }
 
 .btn:disabled, .disabled{ background:#d1d5db !important; color:#6b7280 !important; cursor:not-allowed !important; position: relative; }
-.btn:disabled::after{ content: " (disabled)"; font-weight: 500; }
 
 .header{ display:flex; align-items:center; gap:12px; justify-content: space-between; margin-bottom: 14px; }
 .header h1{ margin:0; font-size: 20px; }
@@ -77,3 +77,13 @@ tbody tr:hover{ transform: scale(1.01); box-shadow: 0 8px 18px rgba(0,0,0,0.08);
 
 .controls-row{ display:flex; gap:10px; align-items:center; justify-content:space-between; margin-bottom:8px; flex-wrap: wrap; }
 .controls-left, .controls-right{ display:flex; gap:10px; align-items:center; }
+
+/* Top header bar */
+.topbar{ position: sticky; top:0; z-index:50; background: rgba(0,0,0,0.15); backdrop-filter: blur(6px); color:#fff; }
+.topbar-inner{ max-width:1100px; margin:0 auto; padding:10px 16px; display:flex; align-items:center; justify-content:space-between; }
+.topbar-title{ display:flex; align-items:center; gap:10px; font-weight:700; color:#fff; }
+.topbar-title img{ height:24px; border-radius:6px; }
+.topbar .btn-signout{ background: rgba(255,255,255,0.25); color:#fff; box-shadow:none; }
+.topbar .btn-signout:hover{ filter: brightness(1.1); }
+.small-compact{ font-size:12px; }
+.search-right{ display:flex; gap:8px; justify-content:flex-end; align-items:center; }

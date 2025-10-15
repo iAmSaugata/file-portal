@@ -9,28 +9,32 @@
   <script defer src="/static/app.js"></script>
 </head>
 <body>
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="topbar-title">
+        <% if (brandLogo) { %><img src="<%= brandLogo %>" alt="logo"/><% } %>
+        <span><%= brandTitle %></span>
+      </div>
+      <div>
+        <a href="/logout"><button class="btn btn-signout small-compact">Sign Out</button></a>
+      </div>
+    </div>
+  </div>
+
   <div class="container">
     <div class="card" style="max-width: 1100px;">
-      <div class="header">
-        <h1 style="display:flex;align-items:center;gap:10px">
-          <% if (brandLogo) { %><img src="<%= brandLogo %>" alt="logo" style="height:28px;border-radius:6px"/><% } %>
-          <span><%= brandTitle %></span>
-        </h1>
-        <div><a href="/logout"><button class="btn btn-muted">Sign Out</button></a></div>
+      <div class="search-right" style="margin:6px 0;">
+        <input id="search" class="small-compact" type="text" placeholder="Search..." style="padding:6px 8px;border:1px solid #d1d5db;border-radius:8px">
+        <button class="btn btn-muted small-compact" onclick="clearSearch()">Search</button>
       </div>
 
       <div class="controls-row">
         <div class="controls-left">
-          <button id="btnBulkDelete" class="btn btn-danger" disabled onclick="bulkDelete()">Remove</button>
+          <button id="btnBulkDelete" class="btn btn-danger" disabled onclick="bulkDelete()">Remove Selected</button>
         </div>
         <div class="controls-right">
           <a href="/upload"><button class="btn btn-blue">File Upload</button></a>
         </div>
-      </div>
-
-      <div class="search-row">
-        <input id="search" type="text" placeholder="Search by file name…"/>
-        <button class="btn btn-muted" onclick="clearSearch()">Clear</button>
       </div>
 
       <div class="table-wrap">

@@ -4,7 +4,6 @@ FROM node:20-alpine
 RUN apk add --no-cache tini
 WORKDIR /app
 
-# install deps without requiring lockfile
 COPY package.json ./
 RUN npm install --omit=dev --no-audit --no-fund
 
