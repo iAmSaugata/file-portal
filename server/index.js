@@ -106,7 +106,7 @@ app.post('/api/getlink', requireAuth, (req,res)=>{
   const id = parseInt(req.body.id, 10);
   const row = getFileById.get(id);
   if (!row) return res.status(404).json({ ok:false, error:'File not found' });
-  const token = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', 21)();
+  const token = nanoId();
   createLink.run({ file_id:id, token, created_at:new Date().toISOString() });
   const origin = BASE_URL || `${req.protocol}://${req.get('host')}`;
   res.json({ ok:true, pageUrl:`${origin}/d/${token}`, directUrl:`${origin}/dl/${token}` });

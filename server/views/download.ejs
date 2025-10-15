@@ -6,9 +6,8 @@
   <title>Download • <%= brandTitle %></title>
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml"/>
   <link rel="stylesheet" href="/static/styles.css"/>
-  <%- brandPrimary ? `<style>:root{ --primary:${brandPrimary} };</style>` : '' %>
+  <% if (brandPrimary) { %><style>:root{ --primary:<%= brandPrimary %>; }</style><% } %>
 </head>
-
 <body>
   <div class="container">
     <div class="card" style="max-width: 520px; text-align:center;">
@@ -17,7 +16,7 @@
         <div style="margin-bottom:10px"><strong><%= fileName %></strong></div>
         <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
           <a class="btn btn-primary" href="/dl/<%= token %>">Download</a>
-          <button class="btn btn-muted" onclick="copyDirect()">Copy direct link</button>
+          <button class="btn btn-muted" onclick="copyDirect()">Copy Link</button>
         </div>
         <div style="margin-top:10px">
           <button class="btn btn-primary" onclick="location.href='/dashboard'">Done</button>
@@ -31,10 +30,18 @@
     </div>
   </div>
 <script>
+function toast(msg, type='info', ms=3200){
+  let wrap = document.querySelector('.toast-wrap');
+  if(!wrap){ wrap=document.createElement('div'); wrap.className='toast-wrap'; document.body.appendChild(wrap); }
+  const t=document.createElement('div'); t.className='toast '+(type==='ok'?'ok':type==='err'?'err':'info'); t.textContent=msg;
+  wrap.appendChild(t);
+  setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateY(-4px)'; }, Math.max(2600, ms-600));
+  setTimeout(()=>{ try{ wrap.removeChild(t); }catch{} }, ms);
+}
 const url = location.origin + "/dl/<%= token %>";
 document.getElementById('u').innerText = url;
-function copyDirect(){ navigator.clipboard.writeText(url).then(()=>alert('Copied!')); }
-function copyWget(){ const t = 'wget -O "' + <%- JSON.stringify(fileName) %> + '" ' + url; navigator.clipboard.writeText(t).then(()=>alert('Copied!')); }
+function copyDirect(){ navigator.clipboard.writeText(url).then(()=>toast('Download Link Copied for ' + <%- JSON.stringify(fileName) %>, 'ok')); }
+function copyWget(){ const t = 'wget -O "' + <%- JSON.stringify(fileName) %> + '" ' + url; navigator.clipboard.writeText(t).then(()=>toast('Copied wget for ' + <%- JSON.stringify(fileName) %>, 'ok')); }
 </script>
 </body>
 </html>

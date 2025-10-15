@@ -6,9 +6,9 @@
   <title><%= brandTitle %></title>
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml"/>
   <link rel="stylesheet" href="/static/styles.css"/>
-  <%- brandPrimary ? `<style>:root{ --primary:${brandPrimary} };</style>` : '' %>
+  <% if (brandPrimary) { %><style>:root{ --primary:<%= brandPrimary %>; }</style><% } %>
+  <script defer src="/static/app.js"></script>
 </head>
-
 <body>
   <div class="topbar">
     <div class="topbar-inner">
@@ -24,15 +24,16 @@
 
   <div class="container">
     <div class="card" style="max-width: 1100px;">
+      <div class="search-right" style="margin:6px 0;">
+        <input id="search" class="small-compact" type="text" placeholder="Search name or comments..." style="padding:6px 8px;border:1px solid #d1d5db;border-radius:8px">
+        <button class="btn btn-muted small-compact" onclick="clearSearch()">Clear</button>
+      </div>
+
       <div class="controls-row">
         <div class="controls-left">
           <button id="btnBulkDelete" class="btn btn-danger" disabled>Remove Selected</button>
         </div>
-        <div class="controls-right" style="flex-direction:column; align-items:flex-end">
-          <div class="search-right" style="margin:6px 0 4px 0;">
-            <input id="search" class="small-compact" type="text" placeholder="Search name or comments..." style="padding:6px 8px;border:1px solid #d1d5db;border-radius:8px">
-            <button class="btn btn-muted small-compact" onclick="clearSearch()">Clear</button>
-          </div>
+        <div class="controls-right">
           <a href="/upload"><button class="btn btn-blue">File Upload</button></a>
         </div>
       </div>
@@ -49,7 +50,7 @@
           </thead>
           <tbody>
             <% for (const f of files) { %>
-              <tr data-name="<%= f.original_name.toLowerCase() %>" data-comments="<%= (f.comments||'').toLowerCase() %>">
+              <tr data-name="<%= f.original_name.toLowerCase() %>" data-comments="<%= (f.comments||'').toLowerCase() %>" data-filename="<%= f.original_name %>">
                 <td><input type="checkbox" value="<%= f.id %>"/></td>
                 <td>
                   <% const showName = f.original_name;
@@ -62,10 +63,10 @@
                   <div class="small" style="color:#6b7280"><%= new Date(f.uploaded_at).toLocaleString() %></div>
                 </td>
                 <td><%= (Math.round(f.size/1024)) %> KB</td>
-                <td class="actions-cell">
+                <td style="text-align:center">
                   <div class="actions">
-                    <button class="btn btn-primary" data-action="getlink" data-id="<%= f.id %>" data-name="<%- showName %>">GetLink</button>
-                    <button class="btn btn-danger" data-action="delete" data-id="<%= f.id %>" data-name="<%- showName %>">Delete</button>
+                    <button class="btn btn-primary" data-action="getlink" data-id="<%= f.id %>">GetLink</button>
+                    <button class="btn btn-danger" data-action="delete" data-id="<%= f.id %>">Delete</button>
                   </div>
                 </td>
               </tr>
@@ -77,6 +78,5 @@
       <div class="footer"><b><%= footerText %></b></div>
     </div>
   </div>
-  <script defer src="/static/app.js"></script>
 </body>
 </html>

@@ -1,33 +1,15 @@
-// Toast helpers (longer)
-function toast(msg, type='info'){
+// Toast helpers (with duration)
+function toast(msg, type='info', ms=3200){
   let wrap = document.querySelector('.toast-wrap');
   if(!wrap){ wrap=document.createElement('div'); wrap.className='toast-wrap'; document.body.appendChild(wrap); }
   const t=document.createElement('div'); t.className='toast '+(type==='ok'?'ok':type==='err'?'err':'info'); t.textContent=msg;
   wrap.appendChild(t);
-  setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateY(-4px)'; }, 4600);
-  setTimeout(()=>{ wrap.removeChild(t); }, 5200);
+  setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateY(-4px)'; }, Math.max(2600, ms-600));
+  setTimeout(()=>{ try{ wrap.removeChild(t); }catch{} }, ms);
 }
 
 function qs(s, el=document){ return el.querySelector(s); }
 function qsa(s, el=document){ return Array.from(el.querySelectorAll(s)); }
-
-// Modal helpers
-function modalConfirm(title, bodyHTML, onConfirm){
-  const wrap = document.createElement('div');
-  wrap.style.position='fixed'; wrap.style.inset='0'; wrap.style.background='rgba(0,0,0,0.45)';
-  wrap.style.display='flex'; wrap.style.alignItems='center'; wrap.style.justifyContent='center'; wrap.style.zIndex='9998';
-  const card = document.createElement('div'); card.className='card'; card.style.maxWidth='520px'; card.style.padding='18px';
-  card.innerHTML = `<h3 style="margin:0 0 10px 0">${title}</h3><div class="panel">${bodyHTML}</div>
-    <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:10px">
-      <button class="btn btn-muted" data-x>Cancel</button>
-      <button class="btn btn-danger" data-ok>Delete</button>
-    </div>`;
-  wrap.appendChild(card);
-  wrap.addEventListener('click',(e)=>{ if(e.target===wrap){ document.body.removeChild(wrap); } });
-  card.querySelector('[data-x]').onclick = ()=> document.body.removeChild(wrap);
-  card.querySelector('[data-ok]').onclick = ()=>{ document.body.removeChild(wrap); onConfirm&&onConfirm(); };
-  document.body.appendChild(wrap);
-}
 
 function filterTable() {
   const term = (qs('#search')?.value || '').toLowerCase();
@@ -44,21 +26,43 @@ function updateBulkState(){
 }
 function clearSearch(){ const s = qs('#search'); if (s){ s.value=''; } filterTable(); }
 
+// Modal utilities
+function modalConfirm({title='Confirm', bodyHTML='', confirmText='Delete', onConfirm}){
+  const back = document.createElement('div'); back.className='modal-backdrop';
+  back.innerHTML = `<div class="modal">
+      <h3>${title}</h3>
+      <div class="panel" style="max-height:260px; overflow:auto;">${bodyHTML}</div>
+      <div class="actions" style="margin-top:10px">
+        <button class="btn btn-muted" id="m-cancel">Cancel</button>
+        <button class="btn btn-danger" id="m-ok">${confirmText}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(back);
+  const close = ()=>{ document.body.removeChild(back); };
+  back.addEventListener('click', (e)=>{ if (e.target===back) close(); });
+  back.querySelector('#m-cancel').onclick = close;
+  back.querySelector('#m-ok').onclick = async ()=>{ try{ await onConfirm?.(); } finally { close(); } };
+}
+
 async function bulkDelete(){
-  const cbs = qsa('tbody input[type="checkbox"]:checked');
-  const ids = cbs.map(cb => Number(cb.value));
-  if (!ids.length) return;
-  const names = cbs.map(cb => cb.closest('tr').querySelector('.filename span').textContent.trim());
-  const listHtml = '<ul style="margin:0;padding-left:18px">'+names.map(n=>'<li>'+n+'</li>').join('')+'</ul>';
-  modalConfirm('Delete Selected', '<div>The following files will be deleted:</div>'+listHtml, async ()=>{
-    for (let i=0;i<ids.length;i++){
+  const selected = qsa('tbody input[type="checkbox"]:checked');
+  if (!selected.length) return;
+  const names = selected.map(cb => cb.closest('tr').dataset.filename || 'File');
+  modalConfirm({
+    title: 'Delete Selected',
+    bodyHTML: `<div class="small">The following files will be deleted:</div><ul>${names.map(n=>`<li>${n}</li>`).join('')}</ul>`,
+    confirmText: 'Delete',
+    onConfirm: async ()=>{
+      const ids = selected.map(cb => Number(cb.value));
       try{
-        const r = await fetch('/api/delete', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ids: [ids[i]] }) });
+        const r = await fetch('/api/delete', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ids }) });
         const j = await r.json();
-        if (j.ok){ toast(names[i] + ' Delete Successfully', 'err'); }
-      }catch(e){ toast('Network error', 'err'); }
+        if (j.ok){
+          names.forEach(n=>toast(`${n} Delete Successfully`, 'err', 5200));
+          location.reload();
+        } else { toast(j.error || 'Failed', 'err', 5200); }
+      }catch(e){ toast('Network error', 'err', 5200); }
     }
-    location.reload();
   });
 }
 
@@ -73,23 +77,29 @@ document.addEventListener('DOMContentLoaded', ()=>{
     tbody.addEventListener('click', async (e)=>{
       const btn = e.target.closest('button[data-action]');
       if (!btn) return;
+      const tr = btn.closest('tr');
       const id = Number(btn.getAttribute('data-id'));
-      const name = btn.getAttribute('data-name') || 'File';
+      const fname = tr?.dataset?.filename || 'File';
       if (btn.dataset.action === 'getlink'){
         try{
           const r = await fetch('/api/getlink', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id }) });
           const j = await r.json();
           if (!j.ok){ toast(j.error || 'Failed', 'err'); return; }
           await navigator.clipboard.writeText(j.directUrl);
-          toast('Download Link Copied for ' + name, 'ok');
+          toast(`Download Link Copied for ${fname}`, 'ok');
         }catch(e){ toast('Network error', 'err'); }
       } else if (btn.dataset.action === 'delete'){
-        modalConfirm('Delete File', '<div>Are you sure you want to delete <b>'+name+'</b>?</div>', async ()=>{
-          try{
-            const r = await fetch('/api/delete', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ids: [id] }) });
-            const j = await r.json();
-            if (j.ok){ toast(name + ' Delete Successfully', 'err'); location.reload(); } else { toast('Failed', 'err'); }
-          }catch(e){ toast('Network error', 'err'); }
+        modalConfirm({
+          title: 'Delete File',
+          bodyHTML: `<div>Delete <b>${fname}</b>?</div>`,
+          confirmText: 'Delete',
+          onConfirm: async ()=>{
+            try{
+              const r = await fetch('/api/delete', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ids: [id] }) });
+              const j = await r.json();
+              if (j.ok){ toast(`${fname} Delete Successfully`, 'err', 5200); location.reload(); } else { toast('Failed', 'err', 5200); }
+            }catch(e){ toast('Network error', 'err', 5200); }
+          }
         });
       }
     });
