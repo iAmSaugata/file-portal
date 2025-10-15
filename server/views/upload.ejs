@@ -216,12 +216,6 @@ function setDisabled(d){
   btnBrowse.disabled = d; picker.disabled = d;
   if (d) queue.classList.add('ghost'); else queue.classList.remove('ghost');
 }
-
-/ Ensure Done always works (even if any inline handler is ignored)
-  document.addEventListener('DOMContentLoaded', () => {
-    const d = document.getElementById('btnDone');
-    if (d) d.addEventListener('click', () => { window.location.href = '/dashboard'; });
-  });
 </script>
 </body>
 </html>
