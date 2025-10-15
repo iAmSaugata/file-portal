@@ -1,8 +1,15 @@
-# File Management Portal (v5)
+# File Management Portal (v6)
 
-- Drag & drop + Browse work (CSP allows inline scripts).
-- Upload queue with per-file progress + speed, starts on **Upload**.
-- After each upload, **Copy Link** appears (creates token & copies direct URL).
-- Bulk button text: **Remove Selected**.
-- Top header bar (outside card) with **File Management** title and **Sign Out**.
-- Background uses attached image color and fills the screen.
+- Dark header with bold title; Sign Out on right.
+- Background uses provided blue; no horizontal scroll.
+- Upload starts immediately on select/drag; Cancel active only while uploading.
+- Duplicate-by-name prevention within the same session.
+- Dashboard: search matches name + comments; comments hidden but 📜 tooltip shows when present.
+- Actions fixed; toast popups for delete (red) and copy (green).
+- Date is the last column.
+
+## Run
+```bash
+docker compose up -d --build
+# open http://<host>:9876
+```

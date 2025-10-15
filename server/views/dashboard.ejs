@@ -13,7 +13,7 @@
     <div class="topbar-inner">
       <div class="topbar-title">
         <% if (brandLogo) { %><img src="<%= brandLogo %>" alt="logo"/><% } %>
-        <span><%= brandTitle %></span>
+        <span>File Management</span>
       </div>
       <div>
         <a href="/logout"><button class="btn btn-signout small-compact">Sign Out</button></a>
@@ -24,7 +24,7 @@
   <div class="container">
     <div class="card" style="max-width: 1100px;">
       <div class="search-right" style="margin:6px 0;">
-        <input id="search" class="small-compact" type="text" placeholder="Search..." style="padding:6px 8px;border:1px solid #d1d5db;border-radius:8px">
+        <input id="search" class="small-compact" type="text" placeholder="Search name or comments..." style="padding:6px 8px;border:1px solid #d1d5db;border-radius:8px">
         <button class="btn btn-muted small-compact" onclick="clearSearch()">Search</button>
       </div>
 
@@ -43,28 +43,35 @@
             <tr>
               <th style="width: 80px;">Select</th>
               <th>File Name</th>
-              <th>Comments</th>
               <th>File Size</th>
-              <th>Date</th>
               <th style="text-align:center;">Action</th>
+              <th>Date</th>
             </tr>
           </thead>
           <tbody>
             <% for (const f of files) {
               const short = f.original_name.length > 10 ? (f.original_name.slice(0,10) + '…') : f.original_name;
             %>
-              <tr data-name="<%= f.original_name.toLowerCase() %>">
+              <tr data-name="<%= f.original_name.toLowerCase() %>" data-search="<%= (f.original_name + ' ' + (f.comments||'')).toLowerCase() %>">
                 <td><input type="checkbox" value="<%= f.id %>"/></td>
-                <td><div class="filename" title="<%= f.original_name %>"><%= short %></div></td>
-                <td><%= f.comments || '' %></td>
+                <td>
+                  <div class="name-cell">
+                    <div class="filename" title="<%= f.original_name %>">
+                      <span class="filename-clip"><%= short %></span><span class="filename-ellipsis">…</span>
+                    </div>
+                    <% if (f.comments) { %>
+                      <span class="comment-icon" data-tip="<%= f.comments %>">📜</span>
+                    <% } %>
+                  </div>
+                </td>
                 <td><%= (Math.round(f.size/1024)) %> KB</td>
-                <td><%= new Date(f.uploaded_at).toLocaleString() %></td>
                 <td>
                   <div class="actions">
                     <button class="btn btn-primary" onclick="getLink(<%= f.id %>)">GetLink</button>
-                    <button class="btn btn-danger" onclick="(async()=>{ if(confirm('Delete &quot;<%= f.original_name %>&quot;?')){ const r=await fetch('/api/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids:[<%= f.id %>]})}); const j=await r.json(); if(j.ok) location.reload(); else alert('Failed'); } })()">Delete</button>
+                    <button class="btn btn-danger" onclick="deleteOne(<%= f.id %>, '<%- f.original_name.replace(/"/g,'\"') %>')">Delete</button>
                   </div>
                 </td>
+                <td><%= new Date(f.uploaded_at).toLocaleString() %></td>
               </tr>
             <% } %>
           </tbody>

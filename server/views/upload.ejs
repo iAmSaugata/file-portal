@@ -26,7 +26,7 @@
     <div class="topbar-inner">
       <div class="topbar-title">
         <% if (brandLogo) { %><img src="<%= brandLogo %>" alt="logo"/><% } %>
-        <span><%= brandTitle %></span>
+        <span>File Management</span>
       </div>
       <div>
         <a href="/logout"><button class="btn btn-signout small-compact">Sign Out</button></a>
@@ -37,10 +37,7 @@
   <div class="container">
     <div class="card" style="max-width: 980px; position: relative;">
       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px">
-        <div style="display:flex;gap:8px;align-items:center">
-          <button id="btnBack" class="btn btn-muted">Back</button>
-          <h2 style="margin:0">Upload Files</h2>
-        </div>
+        <h2 style="margin:0">Upload Files</h2>
         <button id="btnDone" class="btn btn-primary" onclick="location.href='/dashboard'">Done</button>
       </div>
 
@@ -65,10 +62,9 @@
           <h3 style="margin-top:0">Uploading</h3>
           <div id="queue"></div>
           <div class="two-btns" style="margin-top:10px">
-            <button id="btnStart" class="btn btn-primary">Upload</button>
-            <button id="btnCancel" class="btn btn-muted">Cancel</button>
+            <button id="btnCancel" class="btn btn-muted" disabled>Cancel</button>
           </div>
-          <div id="hint" class="small" style="margin-top:8px; color:#6b7280">Queued files will upload when you click <b>Upload</b>.</div>
+          <div id="hint" class="small" style="margin-top:8px; color:#6b7280">Uploads start automatically when you add files.</div>
         </div>
       </div>
 
@@ -80,27 +76,29 @@
 const zone = document.getElementById('zone');
 const picker = document.getElementById('picker');
 const btnBrowse = document.getElementById('btnBrowse');
-const btnStart = document.getElementById('btnStart');
 const btnCancel = document.getElementById('btnCancel');
-const btnBack = document.getElementById('btnBack');
 const queue = document.getElementById('queue');
 const commentsEl = document.getElementById('comments');
 
-btnBack.onclick = ()=>{ if (history.length > 1) history.back(); else location.href='/dashboard'; };
-
-let q = []; // {file, el, lastT, lastLoaded, xhr, fileId}
+let q = [];
+let uploadedNames = new Set();
+let queuedNames = new Set();
 let uploading = false;
 
 btnBrowse.onclick = () => picker.click();
-picker.onchange = () => addFiles(Array.from(picker.files));
+picker.onchange = () => { addFiles(Array.from(picker.files)); maybeStart(); };
 
 zone.ondragover = (e)=>{ e.preventDefault(); zone.style.filter='brightness(1.05)'; };
 zone.ondragleave = ()=>{ zone.style.filter=''; };
-zone.ondrop = (e)=>{ e.preventDefault(); zone.style.filter=''; addFiles(Array.from(e.dataTransfer.files)); };
+zone.ondrop = (e)=>{ e.preventDefault(); zone.style.filter=''; addFiles(Array.from(e.dataTransfer.files)); maybeStart(); };
 
-function human(n){ const u=['B','KB','MB','GB','TB']; let i=0,v=n; while(v>=1024 && i<u.length-1){ v/=1024; i++; } return (Math.round(v*10)/10)+' '+u[i]; }
-
+function human(n){
+  const u=['B','KB','MB','GB','TB']; let i=0; let v=n;
+  while(v>=1024 && i<u.length-1){ v/=1024; i++; }
+  return (Math.round(v*10)/10)+' '+u[i];
+}
 function addFiles(files){
+  files = files.filter(f => !uploadedNames.has(f.name) && !queuedNames.has(f.name));
   for (const file of files){
     const row = document.createElement('div');
     row.className='queue-item';
@@ -118,16 +116,16 @@ function addFiles(files){
         <button class="btn btn-muted small copylink">Copy Link</button>
       </div>`;
     const obj = { file, el: row, lastT: Date.now(), lastLoaded:0, xhr:null, fileId:null };
-    row.querySelector('.x').onclick = ()=>{ if (uploading) return; q = q.filter(e => e !== obj); queue.removeChild(row); };
-    queue.appendChild(row); q.push(obj);
+    row.querySelector('.x').onclick = ()=>{ if (uploading) return; q = q.filter(e => e !== obj); queuedNames.delete(file.name); queue.removeChild(row); };
+    queue.appendChild(row); q.push(obj); queuedNames.add(file.name);
   }
 }
+btnCancel.onclick = ()=>{ if (!uploading) return; const cur = q.find(x=>x.xhr); if (cur && cur.xhr) cur.xhr.abort(); };
+function maybeStart(){ if(!uploading && q.length){ startUpload(); } }
 
-btnCancel.onclick = ()=>{ if (!uploading){ q=[]; queue.innerHTML=''; return; } const cur = q.find(x=>x.xhr); if (cur && cur.xhr) cur.xhr.abort(); };
-
-btnStart.onclick = async ()=>{
+async function startUpload(){
   if (uploading || !q.length) return;
-  uploading = true; setDisabled(true);
+  uploading = true; setDisabled(true); btnCancel.disabled=false;
   for (const item of q){
     const fd = new FormData();
     fd.append('files', item.file);
@@ -158,29 +156,28 @@ btnStart.onclick = async ()=>{
               const j = JSON.parse(xhr.responseText);
               if (j.ok && j.saved && j.saved.length){
                 item.fileId = j.saved[0].id;
+                uploadedNames.add(item.file.name);
+                queuedNames.delete(item.file.name);
                 links.style.display='flex';
                 copyBtn.onclick = async ()=>{
                   const r = await fetch('/api/getlink',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: item.fileId })});
                   const g = await r.json();
-                  if (g.ok){ await navigator.clipboard.writeText(g.directUrl); alert('Direct link copied!'); }
+                  if (g.ok){ await navigator.clipboard.writeText(g.directUrl); }
                 };
               }
-            } catch {}
-          } else {
-            spd.textContent = 'failed';
-          }
+            }catch{}
+          } else { spd.textContent = 'failed'; }
           resolve(true);
         }
       };
       xhr.send(fd);
     });
   }
-  uploading = false; setDisabled(false);
-};
+  uploading = false; setDisabled(false); btnCancel.disabled=true;
+}
 
 function setDisabled(d){
-  btnBrowse.disabled = d; btnStart.disabled = d; picker.disabled = d;
-  btnCancel.textContent = d ? 'Cancel (active)' : 'Cancel';
+  btnBrowse.disabled = d; picker.disabled = d;
   if (d) queue.classList.add('ghost'); else queue.classList.remove('ghost');
 }
 </script>

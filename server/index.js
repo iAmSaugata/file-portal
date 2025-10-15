@@ -29,7 +29,7 @@ const BASE_URL = (process.env.BASE_URL || '').trim();
 
 const nanoId = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', 21);
 
-// CSP allows inline scripts for upload page logic
+// CSP allows inline scripts & inline styles for our EJS pages
 app.use(helmet({
   contentSecurityPolicy: {
     useDefaults: true,
@@ -44,9 +44,8 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(process.cwd(), 'views'));
 app.use('/static', express.static(path.join(process.cwd(), 'public')));
 
-// Limits
-const generalLimiter = rateLimit({ windowMs: RATE_LIMIT_WINDOW_MS, max: RATE_LIMIT_MAX, standardHeaders:true, legacyHeaders:false });
-app.use('/api', generalLimiter);
+// API limiter
+app.use('/api', rateLimit({ windowMs: RATE_LIMIT_WINDOW_MS, max: RATE_LIMIT_MAX, standardHeaders:true, legacyHeaders:false }));
 const downloadLimiter = rateLimit({ windowMs: RATE_LIMIT_WINDOW_MS, max: DOWNLOAD_RATE_LIMIT_MAX, standardHeaders:true, legacyHeaders:false });
 
 // Branding locals
@@ -80,6 +79,7 @@ const uploadDir = path.join(process.cwd(), 'uploads'); fs.mkdirSync(uploadDir, {
 const multerUpload = multer({ storage: multer.diskStorage({ destination: (req,f,cb)=>cb(null,uploadDir), filename:(req,f,cb)=>cb(null, nanoId()+path.extname(f.originalname||'')) }), limits: { fileSize: MAX_UPLOAD_MB*1024*1024 } });
 
 app.get('/upload', requireAuth, (req,res)=> res.render('upload',{ disabled:false }));
+
 app.post('/api/upload', requireAuth, multerUpload.array('files'), (req,res)=>{
   const comments = (req.body.comments || '').toString().slice(0,1000);
   const now = new Date().toISOString();
@@ -90,12 +90,14 @@ app.post('/api/upload', requireAuth, multerUpload.array('files'), (req,res)=>{
   }
   res.json({ ok:true, saved });
 });
+
 app.post('/api/delete', requireAuth, (req,res)=>{
   const ids = Array.isArray(req.body.ids) ? req.body.ids.map(x=>parseInt(x,10)).filter(Number.isFinite) : [];
   if (!ids.length) return res.status(400).json({ ok:false, error:'No ids provided' });
   for (const id of ids){ const row = getFileById.get(id); if (row){ try{ fs.unlinkSync(path.join(uploadDir,row.stored_name)); }catch{} } }
   deleteFilesByIds(ids); res.json({ ok:true, removed: ids.length });
 });
+
 app.post('/api/getlink', requireAuth, (req,res)=>{
   const id = parseInt(req.body.id, 10);
   const row = getFileById.get(id);
@@ -117,12 +119,12 @@ app.get('/dl/:token', downloadLimiter, (req,res)=>{
   if (!row) return res.status(404).send('Invalid link');
   const age = Date.now() - new Date(row.created_at).getTime();
   if (age > LINK_TTL_MS) return res.status(410).send('Link expired');
-  const filePath = path.join(uploadDir,row.stored_name);
-  if (!fs.existsSync(filePath)) return res.status(404).send('File missing');
+  const fp = path.join(uploadDir,row.stored_name);
+  if (!fs.existsSync(fp)) return res.status(404).send('File missing');
   const mimeType = mime.lookup(row.original_name) || 'application/octet-stream';
   res.setHeader('Content-Type', mimeType);
   res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(row.original_name)}"`);
-  fs.createReadStream(filePath).pipe(res);
+  fs.createReadStream(fp).pipe(res);
 });
 
 app.use((req,res)=>res.status(404).send('Not Found'));
