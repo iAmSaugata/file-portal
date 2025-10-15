@@ -39,7 +39,7 @@
     <div class="card" style="max-width: 980px; position: relative;">
       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px">
         <h2 style="margin:0">Upload Files</h2>
-        <button id="btnDone" class="btn btn-primary" type="button" onclick="location.href='/dashboard'">Done</button>
+        <button id="btnDone" class="btn btn-primary" type="button">Done</button>
       </div>
 
       <div class="upload-grid">
@@ -84,6 +84,12 @@ function toast(msg, type='info', ms=3200){
   setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateY(-4px)'; }, Math.max(2600, ms-600));
   setTimeout(()=>{ try{ wrap.removeChild(t); }catch{} }, ms);
 }
+
+// Bind Done explicitly
+document.addEventListener('DOMContentLoaded', ()=>{
+  const done = document.getElementById('btnDone');
+  if (done){ done.addEventListener('click', ()=>{ window.location.assign('/dashboard'); }); }
+});
 
 // Worker for SHA-256
 const workerCode = () => {
@@ -213,7 +219,10 @@ async function startUploads(){
 }
 
 function setDisabled(d){
-  btnBrowse.disabled = d; picker.disabled = d;
+  const btnBrowse = document.getElementById('btnBrowse');
+  const picker = document.getElementById('picker');
+  if (btnBrowse) btnBrowse.disabled = d;
+  if (picker) picker.disabled = d;
   if (d) queue.classList.add('ghost'); else queue.classList.remove('ghost');
 }
 </script>

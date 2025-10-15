@@ -69,6 +69,8 @@ tbody tr:hover{ transform: scale(1.01); box-shadow: 0 8px 18px rgba(0,0,0,0.08);
 .controls-row{ display:flex; gap:10px; align-items:center; justify-content:space-between; margin-bottom:8px; flex-wrap: wrap; }
 .controls-left, .controls-right{ display:flex; gap:10px; align-items:center; }
 
+.search-right{ display:flex; justify-content:flex-end; gap:8px; }
+
 /* Top header bar (darker, bigger title) */
 .topbar{ position: sticky; top:0; z-index:50; background: linear-gradient(180deg,#1f2a5a,#2d3b8b); color:#ecf2ff; }
 .topbar-inner{ max-width:1100px; margin:0 auto; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; }
