@@ -76,7 +76,6 @@ app.post('/login', loginLimiter, (req,res)=>{
   const ok = password && bcrypt.compareSync(password, AUTH_BCRYPT_HASH);
   if (ok){
     res.cookie('sess','ok',{signed:true,httpOnly:true,sameSite:'lax',maxAge:1000*60*60*24*30});
-    // set localStorage flag then redirect
     return res.status(200).send(`<!doctype html><meta charset="utf-8"><script>try{localStorage.setItem('fm_authed','1')}catch(e){};location.replace('/dashboard');</script>`);
   }
   return res.status(401).render('login',{ error:'Invalid password. Please try again.' });

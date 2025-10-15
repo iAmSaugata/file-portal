@@ -67,6 +67,12 @@ tbody tr:hover{ transform: scale(1.01); box-shadow: 0 8px 18px rgba(0,0,0,0.08);
 .topbar .btn-signout{ background: rgba(255,255,255,0.25); color:#fff; box-shadow:none; }
 .topbar .btn-signout:hover{ filter: brightness(1.1); }
 .small-compact{ font-size:12px; }
+
+/* Controls alignment fix */
+.controls-row{ display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+.controls-left{ display:flex; gap:10px; align-items:center; }
+.controls-right{ display:flex; gap:10px; align-items:center; margin-left:auto; }
+
 .search-right{ display:flex; gap:8px; justify-content:flex-end; align-items:center; }
 
 /* Toasts */
@@ -77,7 +83,7 @@ tbody tr:hover{ transform: scale(1.01); box-shadow: 0 8px 18px rgba(0,0,0,0.08);
 .toast.err{ background:#ef4444; }
 
 /* Uploads */
-.dropzone{ border: 2px dashed #93c5fd; border-radius: 16px; padding: 30px; text-align:center; background: #f8fbff; }
+.dropzone{ border: 2px dashed #93c5fd; border-radius: 16px; padding: 30px; text-align:center; background: #f8fbff; cursor: pointer; }
 .progress{ height: 10px; background: #e5e7eb; border-radius: 8px; overflow: hidden; margin-top: 8px; }
 .progress-bar{ height: 100%; width: 0%; background: linear-gradient(90deg,#60a5fa,#93c5fd); transition: width 0.1s linear; }
 .queue-item{ background:#fff; border:1px solid #eef0f5; border-radius:12px; padding:10px 12px; margin:10px 0; }
