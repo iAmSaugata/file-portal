@@ -1,0 +1,204 @@
+/* Global Theme */
+:root{
+  --bg: #f5f7fb;
+  --card: #ffffff;
+  --primary: #1f7aec;
+  --primary-weak: #a9ccff;
+  --danger: #e05353;
+  --muted: #6b7280;
+  --shadow: 0 10px 25px rgba(0,0,0,0.08);
+}
+
+*{ box-sizing: border-box; }
+
+body{
+  margin:0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  background: linear-gradient(180deg, #f7f9fd 0%, #eef2f7 100%);
+  color:#111827;
+}
+
+/* Centered container */
+.container{
+  max-width: 1100px;
+  margin: 40px auto;
+  padding: 0 16px;
+}
+
+/* Card */
+.card{
+  background: var(--card);
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: var(--shadow);
+  margin: 0 auto;
+}
+
+/* Gradient panel subtle */
+.panel{
+  background: linear-gradient(145deg, #ffffff, #f1f5ff);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 8px 18px rgba(31,122,236,0.08);
+}
+
+/* 3D Buttons */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center;
+  gap:8px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.15);
+  transform: translateY(0);
+  transition: transform .08s ease, box-shadow .2s ease, filter .2s ease, background .2s ease;
+}
+.btn:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 6px 0 rgba(0,0,0,0.12);
+  filter: brightness(1.06);
+}
+.btn:active{
+  transform: translateY(0);
+  box-shadow: 0 3px 0 rgba(0,0,0,0.18);
+}
+
+/* Colors */
+.btn-primary{ background:#60a5fa; }
+.btn-blue{ background:#93c5fd; }  /* light blue for upload */
+.btn-danger{ background:#ef4444; } /* red delete */
+.btn-muted{ background:#e5e7eb; color:#111; }
+
+/* Disabled style */
+.btn:disabled,
+.disabled{
+  background:#d1d5db !important;
+  color:#6b7280 !important;
+  cursor:not-allowed !important;
+  position: relative;
+}
+.btn:disabled::after{
+  content: " (disabled)";
+  font-weight: 500;
+}
+
+/* Header */
+.header{
+  display:flex; align-items:center; gap:12px;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.header h1{ margin:0; font-size: 20px; }
+
+.footer{
+  margin-top: 24px;
+  text-align:center;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* Table */
+.table-wrap{
+  overflow-x: auto;
+}
+table{
+  width:100%;
+  border-collapse: separate;
+  border-spacing: 0 10px;
+}
+thead th{
+  text-align:left;
+  font-size: 13px;
+  color: var(--muted);
+  padding: 6px 10px;
+}
+tbody td{
+  background: #fff;
+  padding: 12px 10px;
+  border-top: 1px solid #eef0f5;
+  border-bottom: 1px solid #eef0f5;
+}
+
+/* Row hover with shadow + scale */
+tbody tr{
+  transition: transform .08s ease, box-shadow .12s ease;
+}
+tbody tr:hover{
+  transform: scale(1.01);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.08);
+}
+
+/* Filename clipping */
+.filename{
+  max-width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Search row */
+.search-row{
+  display:flex; align-items:center; gap:10px; margin: 8px 0 16px;
+}
+.search-row input[type="text"]{
+  flex:1;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  outline: none;
+}
+
+/* Login layout */
+.login-wrap{
+  min-height: 100vh;
+  display:flex; align-items:center; justify-content:center;
+  padding: 20px;
+}
+.login-card{
+  width: 100%;
+  max-width: 380px;
+}
+.login-title{ margin-top:0; margin-bottom: 12px; }
+.login-actions{
+  display:grid; grid-template-columns: repeat(3,1fr); gap:10px; margin-top: 10px;
+}
+
+/* Upload area */
+.dropzone{
+  border: 2px dashed #93c5fd;
+  border-radius: 16px;
+  padding: 30px;
+  text-align:center;
+  background: #f8fbff;
+}
+.progress{
+  height: 12px;
+  background: #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+.progress-bar{
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg,#60a5fa,#93c5fd);
+  transition: width 0.1s linear;
+}
+
+/* Actions cell */
+.actions{
+  display:flex; align-items:center; justify-content:center; gap:8px;
+}
+.small{
+  font-size: 12px;
+}
+
+/* Sticky controls row */
+.controls-row{
+  display:flex; gap:10px; align-items:center; justify-content:space-between;
+  margin-bottom:8px;
+  flex-wrap: wrap;
+}
+.controls-left, .controls-right{ display:flex; gap:10px; align-items:center; }

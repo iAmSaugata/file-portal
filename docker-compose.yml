@@ -1,0 +1,18 @@
+version: "3.8"
+
+services:
+  file-portal:
+    build: ./server
+    container_name: file-portal
+    environment:
+      - PORT=8080
+      - SESSION_SECRET=${SESSION_SECRET:-change-me-please}
+      - AUTH_BCRYPT_HASH=${AUTH_BCRYPT_HASH}
+      - MAX_UPLOAD_MB=${MAX_UPLOAD_MB:-100}
+      - BASE_URL=${BASE_URL:-}
+    volumes:
+      - ./data/uploads:/app/uploads
+      - ./data/sqlite:/app/sqlite
+    ports:
+      - "9876:8080"
+    restart: unless-stopped

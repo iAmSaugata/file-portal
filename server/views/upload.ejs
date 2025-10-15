@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Upload • <%= brandTitle %></title>
+  <link rel="stylesheet" href="/static/styles.css"/>
+  <% if (brandPrimary) { %><style>:root{ --primary:<%= brandPrimary %>; }</style><% } %>
+</head>
+<body>
+  <div class="container">
+    <div class="card" style="max-width: 800px; position: relative;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px">
+        <h2 style="margin:0">Upload Files</h2>
+        <button id="btnDone" class="btn btn-primary" onclick="location.href='/dashboard'">Done</button>
+      </div>
+
+      <div class="panel" style="margin-bottom:12px">
+        <p class="small" style="margin:0">You can drag & drop files anywhere inside the dashed area, or click "Browse" to select.</p>
+      </div>
+
+      <div id="zone" class="dropzone">
+        <p style="margin-top:0">Drop files here</p>
+        <input id="picker" type="file" multiple />
+        <div style="margin-top:10px">
+          <button id="btnBrowse" class="btn btn-blue">Browse</button>
+          <button id="btnStart" class="btn btn-primary">Start Upload</button>
+        </div>
+        <div id="progressWrap" class="progress" style="display:none">
+          <div id="bar" class="progress-bar"></div>
+        </div>
+        <div id="result" style="margin-top:10px"></div>
+      </div>
+
+      <div style="margin-top:12px">
+        <label class="small" for="comments">Comments (optional)</label>
+        <textarea id="comments" placeholder="Optional comments" style="width:100%; min-height:80px; padding:10px; border:1px solid #d1d5db; border-radius:10px"></textarea>
+      </div>
+
+      <div class="footer"><b><b><%= footerText %></b></b></div>
+    </div>
+  </div>
+
+<script>
+const zone = document.getElementById('zone');
+const picker = document.getElementById('picker');
+const btnBrowse = document.getElementById('btnBrowse');
+const btnStart = document.getElementById('btnStart');
+const bar = document.getElementById('bar');
+const progressWrap = document.getElementById('progressWrap');
+const result = document.getElementById('result');
+const commentsEl = document.getElementById('comments');
+
+let files = [];
+
+btnBrowse.onclick = () => picker.click();
+picker.onchange = () => { files = Array.from(picker.files); };
+zone.ondragover = (e)=>{ e.preventDefault(); zone.style.filter='brightness(1.05)'; };
+zone.ondragleave = ()=>{ zone.style.filter=''; };
+zone.ondrop = (e)=>{
+  e.preventDefault(); zone.style.filter='';
+  files = Array.from(e.dataTransfer.files);
+};
+
+function setDisabled(d){
+  btnBrowse.disabled = d;
+  btnStart.disabled = d;
+  picker.disabled = d;
+}
+
+btnStart.onclick = async () => {
+  if (!files.length){ alert('Pick some files'); return; }
+  setDisabled(true);
+  progressWrap.style.display='block';
+  bar.style.width='0%';
+  result.innerHTML = '';
+
+  const form = new FormData();
+  for (const f of files) form.append('files', f);
+  form.append('comments', commentsEl.value || '');
+
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST','/api/upload',true);
+  xhr.upload.onprogress = (e)=>{
+    if (e.lengthComputable){
+      const pct = Math.round((e.loaded/e.total)*100);
+      bar.style.width = pct + '%';
+    }
+  };
+  xhr.onreadystatechange = ()=>{
+    if (xhr.readyState===4){
+      try{
+        const j = JSON.parse(xhr.responseText);
+        if (j.ok){
+          const origin = location.origin;
+          result.innerHTML = '<div class="panel">Upload complete. Go to Dashboard (Done button) or create links there.</div>';
+        } else {
+          result.innerHTML = '<div class="panel" style="color:#b91c1c">Failed: ' + (j.error||'Unknown') + '</div>';
+        }
+      }catch{
+        result.innerHTML = '<div class="panel" style="color:#b91c1c">Unexpected response</div>';
+      }
+      setDisabled(false);
+    }
+  };
+  xhr.send(form);
+};
+</script>
+</body>
+</html>

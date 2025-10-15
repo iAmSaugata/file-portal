@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title><%= brandTitle %></title>
+  <link rel="stylesheet" href="/static/styles.css"/>
+  <% if (brandPrimary) { %><style>:root{ --primary:<%= brandPrimary %>; }</style><% } %>
+  <script defer src="/static/app.js"></script>
+</head>
+<body>
+  <div class="container">
+    <div class="card" style="max-width: 1100px;">
+      <div class="header">
+        <h1 style="display:flex;align-items:center;gap:10px"><% if (brandLogo) { %><img src="<%= brandLogo %>" alt="logo" style="height:28px;border-radius:6px"/><% } %><span><%= brandTitle %></span></h1>
+        <div>
+          <a href="/logout"><button class="btn btn-muted">Sign Out</button></a>
+        </div>
+      </div>
+
+      <div class="controls-row">
+        <div class="controls-left">
+          <button id="btnBulkDelete" class="btn btn-danger" disabled onclick="bulkDelete()">Delete Selected</button>
+        </div>
+        <div class="controls-right">
+          <a href="/upload"><button class="btn btn-blue">File Upload</button></a>
+        </div>
+      </div>
+
+      <div class="search-row">
+        <input id="search" type="text" placeholder="Search by file name…"/>
+        <button class="btn btn-muted" onclick="clearSearch()">Clear</button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 80px;">Select</th>
+              <th>File Name</th>
+              <th>Comments</th>
+              <th>File Size</th>
+              <th>Date</th>
+              <th style="text-align:center;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% for (const f of files) { 
+                const short = f.original_name.length > 10 ? (f.original_name.slice(0,10) + '…') : f.original_name;
+            %>
+              <tr data-name="<%= f.original_name.toLowerCase() %>">
+                <td><input type="checkbox" value="<%= f.id %>"/></td>
+                <td>
+                  <div class="filename" title="<%= f.original_name %>"><%= short %></div>
+                </td>
+                <td><%= f.comments || '' %></td>
+                <td><%= (Math.round(f.size/1024)) %> KB</td>
+                <td><%= new Date(f.uploaded_at).toLocaleString() %></td>
+                <td>
+                  <div class="actions">
+                    <button class="btn btn-primary" onclick="getLink(<%= f.id %>)">GetLink</button>
+                    <button class="btn btn-danger" onclick="(async()=>{ if(confirm('Delete &quot;<%= f.original_name %>&quot;?')){ const r=await fetch('/api/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids:[<%= f.id %>]})}); const j=await r.json(); if(j.ok) location.reload(); else alert('Failed'); } })()">Delete</button>
+                  </div>
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="footer"><b><b><%= footerText %></b></b></div>
+    </div>
+  </div>
+</body>
+</html>
