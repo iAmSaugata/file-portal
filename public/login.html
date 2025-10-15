@@ -1,0 +1,35 @@
+<!doctype html><html><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Login</title>
+<link rel="stylesheet" href="/assets/styles.css">
+</head><body onload="loadBrand()">
+<div class="header">
+  <div class="brand"><img class="brand-logo" style="height:24px"><div class="brand-title">File Management</div></div>
+  <div class="right"></div>
+</div>
+<div class="container">
+  <div class="card" style="max-width:420px">
+    <h2>Login</h2>
+    <div id="err" class="muted" style="display:none;margin-bottom:8px"></div>
+    <input type="password" id="pw" placeholder="Password" />
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn" onclick="document.getElementById('pw').value=''">Clear</button>
+      <button class="btn blue" onclick="doLogin()">Login</button>
+    </div>
+  </div>
+</div>
+<div class="footer">Powered by ChatGPT • © iAmSaugata</div>
+<div class="toast"></div>
+<script src="/assets/common.js"></script>
+<script>
+async function doLogin(){
+  const pw = document.getElementById('pw').value;
+  try{
+    const r = await fetch('/login', {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:new URLSearchParams({password:pw})});
+    if(!r.ok){ document.getElementById('err').style.display='block'; document.getElementById('err').textContent='Invalid password'; return; }
+    localStorage.setItem('authed','1');
+    window.location.href='/dashboard';
+  }catch(e){ toast('Login failed','error'); }
+}
+</script>
+</body></html>

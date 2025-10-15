@@ -1,0 +1,21 @@
+{
+  "name": "file-management-portal",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "postinstall": "node -e \"try{require('fs').mkdirSync('./uploads',{recursive:true});require('fs').mkdirSync('./data',{recursive:true});}catch(e){}\""
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^11.8.1",
+    "cookie-parser": "^1.4.7",
+    "express": "^4.21.1",
+    "express-rate-limit": "^7.4.0",
+    "helmet": "^7.1.0",
+    "mime-types": "^2.1.35",
+    "multer": "^1.4.5-lts.1",
+    "nanoid": "^5.0.7"
+  }
+}
