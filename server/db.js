@@ -64,5 +64,3 @@ FROM links l
 JOIN files f ON f.id = l.file_id
 WHERE l.token = ?
 `);
-
-export default db;

@@ -17,6 +17,9 @@
           <a class="btn btn-primary" href="/dl/<%= token %>">Download</a>
           <button class="btn btn-muted" onclick="copyDirect()">Copy direct link</button>
         </div>
+        <div style="margin-top:10px">
+          <button class="btn btn-primary" onclick="location.href='/dashboard'">Done</button>
+        </div>
         <div class="small" style="margin-top:10px">
           CLI: <code id="wget">wget -O "<%= fileName %>" <span id="u"></span></code>
           <button class="btn btn-muted small" onclick="copyWget()">copy</button>

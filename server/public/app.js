@@ -24,7 +24,7 @@ function updateBulkState(){
   const btn = qs('#btnBulkDelete');
   if (btn) btn.disabled = !any;
 }
-function clearSearch(){ filterTable(); }
+function clearSearch(){ const s = qs('#search'); if (s){ s.value=''; } filterTable(); }
 
 async function bulkDelete(){
   const ids = qsa('tbody input[type="checkbox"]:checked').map(cb => cb.value);
@@ -36,21 +36,38 @@ async function bulkDelete(){
     if (j.ok){ toast('Deleted', 'err'); location.reload(); } else { toast(j.error || 'Failed', 'err'); }
   }catch(e){ toast('Network error', 'err'); }
 }
-async function getLink(id){
-  try{
-    const r = await fetch('/api/getlink', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id }) });
-    const j = await r.json();
-    if (!j.ok){ toast(j.error || 'Failed', 'err'); return; }
-    await navigator.clipboard.writeText(j.directUrl);
-    toast('Link copied', 'ok');
-  }catch(e){ toast('Network error', 'err'); }
-}
+
 document.addEventListener('DOMContentLoaded', ()=>{
   const search = qs('#search'); if (search){ search.addEventListener('input', filterTable); }
   qsa('tbody input[type="checkbox"]').forEach(cb=> cb.addEventListener('change', updateBulkState));
-  // wire bulk button explicitly if present
   const bulkBtn = qs('#btnBulkDelete'); if (bulkBtn) bulkBtn.addEventListener('click', bulkDelete);
-  // wire getlink buttons rendered inline (have onclick), nothing extra needed
+
+  // Event delegation for row action buttons
+  const tbody = document.querySelector('tbody');
+  if (tbody){
+    tbody.addEventListener('click', async (e)=>{
+      const btn = e.target.closest('button[data-action]');
+      if (!btn) return;
+      const id = Number(btn.getAttribute('data-id'));
+      if (btn.dataset.action === 'getlink'){
+        try{
+          const r = await fetch('/api/getlink', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id }) });
+          const j = await r.json();
+          if (!j.ok){ toast(j.error || 'Failed', 'err'); return; }
+          await navigator.clipboard.writeText(j.directUrl);
+          toast('Link copied', 'ok');
+        }catch(e){ toast('Network error', 'err'); }
+      } else if (btn.dataset.action === 'delete'){
+        if (!confirm('Delete this file?')) return;
+        try{
+          const r = await fetch('/api/delete', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ids: [id] }) });
+          const j = await r.json();
+          if (j.ok){ toast('Deleted', 'err'); location.reload(); } else { toast('Failed', 'err'); }
+        }catch(e){ toast('Network error', 'err'); }
+      }
+    });
+  }
+
   updateBulkState();
   filterTable();
 });

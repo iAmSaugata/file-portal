@@ -74,7 +74,7 @@
   </div>
 
 <script>
-// minimal toast (upload page)
+/* Toasts */
 function toast(msg, type='info'){
   let wrap = document.querySelector('.toast-wrap');
   if(!wrap){ wrap=document.createElement('div'); wrap.className='toast-wrap'; document.body.appendChild(wrap); }
@@ -84,7 +84,7 @@ function toast(msg, type='info'){
   setTimeout(()=>{ wrap.removeChild(t); }, 3200);
 }
 
-// Create a quick worker for SHA-256 hashing
+// Worker for SHA-256
 const workerCode = () => {
   self.onmessage = async (e)=>{
     const file = e.data;

@@ -25,7 +25,7 @@
     <div class="card" style="max-width: 1100px;">
       <div class="search-right" style="margin:6px 0;">
         <input id="search" class="small-compact" type="text" placeholder="Search name or comments..." style="padding:6px 8px;border:1px solid #d1d5db;border-radius:8px">
-        <button class="btn btn-muted small-compact" onclick="clearSearch()">Search</button>
+        <button class="btn btn-muted small-compact" onclick="clearSearch()">Clear</button>
       </div>
 
       <div class="controls-row">
@@ -53,8 +53,8 @@
                 <td><input type="checkbox" value="<%= f.id %>"/></td>
                 <td>
                   <% const showName = f.original_name;
-                     const long = showName.length > 25;
-                     const display = long ? (showName.slice(0,25) + '<span style="color:#2563eb">...</span>') : showName; %>
+                     const long = showName.length > 60;
+                     const display = long ? (showName.slice(0,60) + '<span style="color:#2563eb">...</span>') : showName; %>
                   <div class="filename" title="<%= long ? showName : '' %>" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
                     <span><%- display %></span>
                     <% if (f.comments) { %><span title="<%= f.comments %>">📜</span><% } %>
@@ -62,10 +62,10 @@
                   <div class="small" style="color:#6b7280"><%= new Date(f.uploaded_at).toLocaleString() %></div>
                 </td>
                 <td><%= (Math.round(f.size/1024)) %> KB</td>
-                <td>
+                <td style="text-align:center">
                   <div class="actions">
-                    <button class="btn btn-primary" onclick="getLink(<%= f.id %>)">GetLink</button>
-                    <button class="btn btn-danger" onclick="(async()=>{ if(confirm('Delete &quot;<%= f.original_name %>&quot;?')){ const r=await fetch('/api/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids:[<%= f.id %>]})}); const j=await r.json(); if(j.ok){ toast('Deleted','err'); location.reload(); } else { toast('Failed','err'); } } })()">Delete</button>
+                    <button class="btn btn-primary" data-action="getlink" data-id="<%= f.id %>">GetLink</button>
+                    <button class="btn btn-danger" data-action="delete" data-id="<%= f.id %>">Delete</button>
                   </div>
                 </td>
               </tr>

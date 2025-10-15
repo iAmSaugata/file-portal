@@ -1,9 +1,16 @@
-# File Management Portal — v6
+# File Management Portal — v7
 
-- No horizontal scroll; darker header bar with bold title + Sign Out.
-- Upload: instant start (drag/drop or browse), cancel only when active, Done => dashboard.
-- Duplicate prevention: skips by **name** and by **SHA‑256** content hash (worker).
-- Dashboard: search by **name or comments**, comments column removed; date shown below name; 📜 tooltip icon when comments exist.
-- Filename shows fully; beyond 25 chars shows highlighted ellipsis + tooltip.
-- Toasters: blue (info), green (copied), red (delete/fail).
-- Dockerized; bcrypt password login optional; 24h link expiry & rate limits.
+Fixes & Tweaks:
+- Download page has a **Done** button -> dashboard (refreshes list).
+- Dashboard actions wired via **event delegation**: *Remove Selected*, *GetLink*, *Delete* work reliably.
+- Search button renamed to **Clear** and clears input.
+- Filename truncation threshold raised to **60** chars; colored ellipsis + tooltip for full name.
+- Action buttons centered; darker header bar with bigger title.
+
+Deploy:
+```bash
+unzip file-portal-v7.zip
+cd file-portal-v7
+docker compose up -d --build
+# http://<host>:9876
+```
