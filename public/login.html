@@ -24,70 +24,16 @@ body{display:flex;flex-direction:column;min-height:100vh;background:var(--bg);ov
   <div class="main-wrap">
     <div class="card">
       <h2>Login</h2>
-      <div id="err" class="muted" style="display:none;margin-bottom:8px"></div>
-      <input type="password" id="pw" placeholder="Password" autocomplete="off"/>
-      <div class="btn-row">
-        <button id="btnClear" type="button" class="btn">Clear</button>
-        <button id="btnLogin" type="button" class="btn blue">Login</button>
-      </div>
+      <form method="post" action="/login" novalidate>
+        <input type="password" name="password" id="pw" placeholder="Password" autocomplete="off" />
+        <div class="btn-row">
+          <button type="reset" class="btn">Clear</button>
+          <button type="submit" class="btn blue">Login</button>
+        </div>
+      </form>
     </div>
   </div>
 
   <div class="footer">Powered by ChatGPT • © iAmSaugata</div>
-  <div class="toast" id="toast"></div>
-
-  <script>
-  // Minimal brand + toast helpers (standalone, no external deps)
-  async function safeLoadBrand(){
-    try{
-      const r = await fetch('/api/brand'); if(!r.ok) return;
-      const b = await r.json();
-      const brandEl = document.querySelector('.brand-title'); if (brandEl && b.title) brandEl.textContent = b.title;
-      const logo = document.querySelector('.brand-logo'); if (logo && b.logo) logo.src = b.logo;
-      if (b.primary) document.documentElement.style.setProperty('--primary', b.primary);
-      const footer = document.querySelector('.footer'); if (footer && b.footer) footer.textContent = b.footer;
-    }catch{}
-  }
-  function toast(msg, type='info'){
-    try{
-      const wrap = document.getElementById('toast');
-      const t = document.createElement('div');
-      t.className = 't ' + (type==='success'?'success': type==='error'?'error':'info');
-      t.textContent = msg;
-      wrap.appendChild(t);
-      setTimeout(()=>t.remove(), 2600);
-    }catch{}
-  }
-
-  window.addEventListener('DOMContentLoaded', () => {
-    safeLoadBrand();
-    const pw = document.getElementById('pw');
-    document.getElementById('btnClear').addEventListener('click', () => { pw.value=''; pw.focus(); });
-    document.getElementById('btnLogin').addEventListener('click', doLogin);
-    pw.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
-  });
-
-  async function doLogin(){
-    const pw = document.getElementById('pw').value.trim();
-    if(!pw){ toast('Enter password','info'); return; }
-    try{
-      const r = await fetch('/login', {
-        method:'POST',
-        headers:{'Content-Type':'application/x-www-form-urlencoded'},
-        body:new URLSearchParams({password: pw})
-      });
-      if(!r.ok){
-        const err = document.getElementById('err');
-        err.style.display='block';
-        err.textContent='Invalid password';
-        return;
-      }
-      localStorage.setItem('authed','1');
-      window.location.href='/dashboard';
-    }catch(e){
-      toast('Login failed','error');
-    }
-  }
-  </script>
 </body>
 </html>

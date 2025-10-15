@@ -105,12 +105,16 @@ app.get('/login', (req,res)=>{
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 app.post('/login', express.urlencoded({extended:true}), (req,res)=>{
+  // If it's a standard form post (not JSON fetch), we will redirect on success
+
   if (!AUTH_BCRYPT_HASH) return res.status(400).send('Auth disabled');
   const pass = (req.body.password || '').toString();
   const ok = bcrypt.compareSync(pass, AUTH_BCRYPT_HASH);
   if (!ok) return res.status(401).send('Invalid password');
   res.cookie('auth', '1', { signed: true, httpOnly: true, sameSite: 'lax' });
-  return res.json({ ok: true });
+  const accept = req.headers['accept'] || '';
+  if (accept.includes('application/json')) return res.json({ ok: true });
+  return res.redirect('/dashboard');
 });
 app.post('/logout', (req,res)=>{
   res.clearCookie('auth');
