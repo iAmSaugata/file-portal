@@ -38,7 +38,7 @@ ORDER BY uploaded_at DESC
 `);
 
 export const getFileById = db.prepare(`
-SELECT id, stored_name, original_name, size FROM files WHERE id = ?
+SELECT id, stored_name, original_name, size, uploaded_at, comments FROM files WHERE id = ?
 `);
 
 export const deleteFilesByIds = (ids) => {
@@ -64,3 +64,5 @@ FROM links l
 JOIN files f ON f.id = l.file_id
 WHERE l.token = ?
 `);
+
+export default db;

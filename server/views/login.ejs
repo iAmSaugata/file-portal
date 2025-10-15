@@ -8,15 +8,16 @@
   <% if (brandPrimary) { %><style>:root{ --primary:<%= brandPrimary %>; }</style><% } %>
 </head>
 <body>
-  <div class="login-wrap" style="display:flex; align-items:center; justify-content:center; min-height:100vh;">
-    <div class="card login-card" style="max-width:380px;">
+  <div class="login-wrap">
+    <div class="card login-card">
       <h2 class="login-title">Login</h2>
       <% if (error) { %><div class="panel" style="color:#b91c1c; margin-bottom:10px"><%= error %></div><% } %>
       <form method="post" action="/login">
         <div style="display:flex; flex-direction:column; gap:10px;">
           <input type="password" name="password" placeholder="Password" required style="padding:10px 12px; border:1px solid #d1d5db; border-radius:10px;"/>
-          <div class="login-actions" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px">
+          <div class="login-actions">
             <button type="reset" class="btn btn-muted">Clear</button>
+            <button type="button" class="btn btn-primary" onclick="location.reload()">Reload</button>
             <button type="submit" class="btn btn-primary">Login</button>
           </div>
         </div>

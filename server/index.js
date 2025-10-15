@@ -29,15 +29,16 @@ const BASE_URL = (process.env.BASE_URL || '').trim();
 
 const nanoId = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', 21);
 
+// CSP allows inline scripts and worker blobs
 app.use(helmet({
   contentSecurityPolicy: {
     useDefaults: true,
     directives: {
-      "script-src": ["'self'","'unsafe-inline'","blob:"],
-      "worker-src": ["'self'","blob:"],
+      "script-src": ["'self'", "'unsafe-inline'"],
       "style-src": ["'self'","'unsafe-inline'"],
-      "connect-src": ["'self'"],
-      "img-src": ["'self'","data:"]
+      "worker-src": ["'self'", "blob:"],
+      "img-src": ["'self'", "data:"],
+      "connect-src": ["'self'"]
     }
   }
 }));
@@ -74,18 +75,12 @@ app.post('/login', loginLimiter, (req,res)=>{
   if (!AUTH_BCRYPT_HASH) return res.redirect('/dashboard');
   const { password } = req.body || {};
   const ok = password && bcrypt.compareSync(password, AUTH_BCRYPT_HASH);
-  if (ok){
-    res.cookie('sess','ok',{signed:true,httpOnly:true,sameSite:'lax',maxAge:1000*60*60*24*30});
-    return res.status(200).send(`<!doctype html><meta charset="utf-8"><script>try{localStorage.setItem('fm_authed','1')}catch(e){};location.replace('/dashboard?r='+Date.now());</script>`);
-  }
+  if (ok){ res.cookie('sess','ok',{signed:true,httpOnly:true,sameSite:'lax',maxAge:1000*60*60*24*30}); return res.redirect('/dashboard'); }
   return res.status(401).render('login',{ error:'Invalid password. Please try again.' });
 });
 app.get('/logout', (req,res)=>{ res.clearCookie('sess'); res.redirect('/login'); });
 
-app.get('/dashboard', requireAuth, (req,res)=>{
-  res.set('Cache-Control','no-store');
-  const files = listFiles.all(); res.render('dashboard', { files, baseUrl: BASE_URL });
-});
+app.get('/dashboard', requireAuth, (req,res)=>{ const files = listFiles.all(); res.render('dashboard', { files, baseUrl: BASE_URL }); });
 
 const uploadDir = path.join(process.cwd(), 'uploads'); fs.mkdirSync(uploadDir, { recursive: true });
 const multerUpload = multer({ storage: multer.diskStorage({ destination: (req,f,cb)=>cb(null,uploadDir), filename:(req,f,cb)=>cb(null, nanoId()+path.extname(f.originalname||'')) }), limits: { fileSize: MAX_UPLOAD_MB*1024*1024 } });

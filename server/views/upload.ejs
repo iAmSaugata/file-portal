@@ -9,6 +9,16 @@
   <style>
     .upload-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:18px; }
     @media (max-width: 860px){ .upload-grid{ grid-template-columns: 1fr; } }
+    .queue-item{ background:#fff; border:1px solid #eef0f5; border-radius:12px; padding:10px 12px; margin:10px 0; }
+    .queue-h{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .queue-name{ font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width: 260px; }
+    .queue-meta{ font-size:12px; color:#6b7280; }
+    .q-actions{ display:flex; gap:8px; }
+    .x{ cursor:pointer; color:#b91c1c; }
+    .bar{ height:10px; background:#e5e7eb; border-radius:8px; overflow:hidden; margin-top:8px; }
+    .bar > div{ height:100%; width:0%; background: linear-gradient(90deg,#60a5fa,#93c5fd); transition: width 0.1s linear; }
+    .two-btns{ display:flex; gap:10px; }
+    .ghost{ opacity:.5; pointer-events:none; }
   </style>
 </head>
 <body>
@@ -28,7 +38,7 @@
     <div class="card" style="max-width: 980px; position: relative;">
       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px">
         <h2 style="margin:0">Upload Files</h2>
-        <a id="btnDone" class="btn btn-primary" href="/dashboard?r=<%= Date.now() %>">Done</a>
+        <button id="btnDone" class="btn btn-primary" type="button" onclick="location.href='/dashboard'">Done</button>
       </div>
 
       <div class="upload-grid">
@@ -38,8 +48,7 @@
             <p style="margin:0 0 4px 0">Drag and Drop Files</p>
             <p class="small" style="margin:0">Or</p>
             <div style="margin-top:8px">
-              <!-- Use a label as the Browse control so it works even if JS fails -->
-              <label id="btnBrowse" for="picker" class="btn btn-blue" style="cursor:pointer">Browse</label>
+              <button id="btnBrowse" class="btn btn-blue" type="button">Browse</button>
               <input id="picker" type="file" multiple style="display:none"/>
             </div>
           </div>
@@ -53,9 +62,10 @@
           <h3 style="margin-top:0">Uploading</h3>
           <div id="queue"></div>
           <div class="two-btns" style="margin-top:10px">
-            <button id="btnCancel" class="btn btn-muted" disabled type="button">Cancel</button>
+            <button id="btnStart" class="btn btn-primary" style="display:none">Upload</button>
+            <button id="btnCancel" class="btn btn-muted" disabled>Cancel</button>
           </div>
-          <div id="hint" class="small" style="margin-top:8px; color:#6b7280">Uploads start automatically when you add files.</div>
+          <div id="hint" class="small" style="margin-top:8px; color:#6b7280">Uploads begin as soon as you add files.</div>
         </div>
       </div>
 
@@ -64,144 +74,131 @@
   </div>
 
 <script>
-(function(){
-  // Toast helper
-  function toast(msg, type='info'){
-    let wrap = document.querySelector('.toast-wrap');
-    if(!wrap){ wrap=document.createElement('div'); wrap.className='toast-wrap'; document.body.appendChild(wrap); }
-    const t=document.createElement('div'); t.className='toast '+(type==='ok'?'ok':type==='err'?'err':'info'); t.textContent=msg;
-    wrap.appendChild(t);
-    setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateY(-4px)'; }, 2600);
-    setTimeout(()=>{ wrap.removeChild(t); }, 3200);
-  }
+// minimal toast (upload page)
+function toast(msg, type='info'){
+  let wrap = document.querySelector('.toast-wrap');
+  if(!wrap){ wrap=document.createElement('div'); wrap.className='toast-wrap'; document.body.appendChild(wrap); }
+  const t=document.createElement('div'); t.className='toast '+(type==='ok'?'ok':type==='err'?'err':'info'); t.textContent=msg;
+  wrap.appendChild(t);
+  setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateY(-4px)'; }, 2600);
+  setTimeout(()=>{ wrap.removeChild(t); }, 3200);
+}
 
-  const zone = document.getElementById('zone');
-  const picker = document.getElementById('picker');
-  const btnCancel = document.getElementById('btnCancel');
-  const queue = document.getElementById('queue');
-  const commentsEl = document.getElementById('comments');
-
-  // Global DnD prevent default to avoid browser opening file when dropped outside zone
-  ['dragenter','dragover','dragleave','drop'].forEach(evt => {
-    document.addEventListener(evt, e => { e.preventDefault(); e.stopPropagation(); }, false);
-  });
-  document.addEventListener('drop', (e)=>{
-    // If dropped outside the zone, still handle it
-    if (!zone.contains(e.target)) handleFiles(Array.from(e.dataTransfer.files));
-  });
-
-  // Clicking the dropzone opens picker (works even if label missed)
-  zone.addEventListener('click', (e)=>{
-    if (e.target.tagName !== 'LABEL') picker.click();
-  });
-
-  // Handle picker changes
-  picker.addEventListener('change', ()=> handleFiles(Array.from(picker.files)));
-
-  function human(n){ const u=['B','KB','MB','GB','TB']; let i=0,v=n; while(v>=1024 && i<u.length-1){ v/=1024; i++; } return (Math.round(v*10)/10)+' '+u[i]; }
-
-  function createWorker(){
-    const code = \`
-    self.onmessage = async (e) => {
-      const file = e.data;
+// Create a quick worker for SHA-256 hashing
+const workerCode = () => {
+  self.onmessage = async (e)=>{
+    const file = e.data;
+    try{
       const buf = await file.arrayBuffer();
       const hashBuf = await crypto.subtle.digest('SHA-256', buf);
-      const bytes = new Uint8Array(hashBuf);
-      let hex = ''; for (let b of bytes){ hex += b.toString(16).padStart(2, '0'); }
-      postMessage(hex);
-    };
-    \`;
-    const blob = new Blob([code], {type:'application/javascript'});
-    return new Worker(URL.createObjectURL(blob));
-  }
-  const finishedByName = new Set(JSON.parse(sessionStorage.getItem('finishedByName') || '[]'));
-  const finishedByHash = new Set(JSON.parse(sessionStorage.getItem('finishedByHash') || '[]'));
+      const hashArr = Array.from(new Uint8Array(hashBuf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+      self.postMessage({ok:true, hash: hashArr});
+    }catch(err){ self.postMessage({ok:false}); }
+  };
+};
+const workerBlob = new Blob([ '(' + workerCode.toString() + ')()' ], { type: 'application/javascript' });
+const hasher = new Worker(URL.createObjectURL(workerBlob));
+function hashFile(file){ return new Promise(res=>{ const onm = (ev)=>{ res(ev.data.ok ? ev.data.hash : null); hasher.removeEventListener('message', onm); }; hasher.addEventListener('message', onm); hasher.postMessage(file); }); }
 
-  async function handleFiles(files){
-    if (!files.length) return;
+const zone = document.getElementById('zone');
+const picker = document.getElementById('picker');
+const btnBrowse = document.getElementById('btnBrowse');
+const btnCancel = document.getElementById('btnCancel');
+const queue = document.getElementById('queue');
+const commentsEl = document.getElementById('comments');
 
-    // Filter duplicates by name already finished
-    files = files.filter(f => !finishedByName.has(f.name));
-    if (!files.length){ toast('All selected files already uploaded in this session','info'); return; }
+let q = []; // {file, el, lastT, lastLoaded, xhr, fileId, hash}
+let uploading = false;
+const uploadedNames = new Set();
+const uploadedHashes = new Set();
 
-    // Compute SHA-256 and filter by content
-    const hashes = await Promise.all(files.map(f => new Promise(res=>{
-      const w = createWorker(); w.onmessage = ev => { res(ev.data); w.terminate(); }; w.postMessage(f);
-    })));
-    const unique = [];
-    for (let i=0;i<files.length;i++){
-      if (finishedByHash.has(hashes[i])){
-        toast('Skipped duplicate (same content): '+files[i].name,'info');
-      } else { files[i]._sha = hashes[i]; unique.push(files[i]); }
-    }
-    if (!unique.length) return;
+btnBrowse.onclick = () => picker.click();
+picker.onchange = () => addFiles(Array.from(picker.files));
 
-    // Upload sequentially for simplicity
-    for (const file of unique){
-      const row = document.createElement('div');
-      row.className='queue-item';
-      row.innerHTML = \`
-        <div class="queue-h">
-          <div class="queue-name" title="\${file.name}">\${file.name}</div>
-          <div class="q-actions"><span class="queue-meta">\${human(file.size)}</span></div>
+zone.ondragover = (e)=>{ e.preventDefault(); zone.style.filter='brightness(1.05)'; };
+zone.ondragleave = ()=>{ zone.style.filter=''; };
+zone.ondrop = (e)=>{ e.preventDefault(); zone.style.filter=''; addFiles(Array.from(e.dataTransfer.files)); };
+
+function human(n){ const u=['B','KB','MB','GB','TB']; let i=0,v=n; while(v>=1024 && i<u.length-1){ v/=1024; i++; } return (Math.round(v*10)/10)+' '+u[i]; }
+
+async function addFiles(files){
+  for (const file of files){
+    if (uploadedNames.has(file.name)) { toast('Skipped (already uploaded by name): ' + file.name, 'info'); continue; }
+    const h = await hashFile(file);
+    if (h && uploadedHashes.has(h)) { toast('Skipped (already uploaded by content): ' + file.name, 'info'); continue; }
+
+    const row = document.createElement('div');
+    row.className='queue-item';
+    row.innerHTML = `
+      <div class="queue-h">
+        <div class="queue-name" title="${file.name}">${file.name}</div>
+        <div class="q-actions">
+          <span class="queue-meta">${human(file.size)}</span>
+          <span class="x" title="Remove from queue">×</span>
         </div>
-        <div class="bar"><div></div></div>
-        <div class="queue-meta"><span class="pct">0%</span> • <span class="spd">0 KB/s</span></div>
-        <div class="q-links" style="margin-top:6px; display:none; gap:6px">
-          <button class="btn btn-muted small copylink" type="button">Copy Link</button>
-        </div>\`;
-      queue.appendChild(row);
-      await uploadOne(file, row);
-    }
+      </div>
+      <div class="bar"><div></div></div>
+      <div class="queue-meta"><span class="pct">0%</span> • <span class="spd">0 KB/s</span></div>
+      <div class="q-links" style="margin-top:6px; display:none; gap:6px">
+        <button class="btn btn-muted small copylink">Copy Link</button>
+      </div>`;
+    const obj = { file, el: row, lastT: Date.now(), lastLoaded:0, xhr:null, fileId:null, hash:h };
+    row.querySelector('.x').onclick = ()=>{ if (uploading) return; q = q.filter(e => e !== obj); queue.removeChild(row); };
+    queue.appendChild(row); q.push(obj);
   }
+  startUploads();
+}
 
-  let currentXhr = null;
-  btnCancel.addEventListener('click', ()=>{ if (currentXhr){ currentXhr.abort(); toast('Canceled','info'); } });
+btnCancel.onclick = ()=>{
+  if (!uploading) return;
+  const cur = q.find(x=>x.xhr);
+  if (cur && cur.xhr){ cur.xhr.abort(); toast('Upload canceled','err'); }
+};
 
-  async function uploadOne(file, row){
-    btnCancel.disabled = false;
+async function startUploads(){
+  if (uploading || !q.length) return;
+  uploading = true; setDisabled(true); btnCancel.disabled = false;
+  while (q.length){
+    const item = q.shift();
     const fd = new FormData();
-    fd.append('files', file);
+    fd.append('files', item.file);
     fd.append('comments', commentsEl.value || '');
 
-    const xhr = new XMLHttpRequest(); currentXhr = xhr;
-    const bar = row.querySelector('.bar > div');
-    const pct = row.querySelector('.pct');
-    const spd = row.querySelector('.spd');
-    const links = row.querySelector('.q-links');
-    const copyBtn = row.querySelector('.copylink');
+    const xhr = new XMLHttpRequest(); item.xhr = xhr;
+    const bar = item.el.querySelector('.bar > div');
+    const pct = item.el.querySelector('.pct');
+    const spd = item.el.querySelector('.spd');
+    const links = item.el.querySelector('.q-links');
+    const copyBtn = item.el.querySelector('.copylink');
 
-    let lastT = Date.now(), lastLoaded = 0;
     xhr.open('POST','/api/upload', true);
     xhr.upload.onprogress = (e)=>{
       if (e.lengthComputable){
         const percent = Math.round((e.loaded/e.total)*100);
         bar.style.width = percent + '%'; pct.textContent = percent + '%';
-        const now = Date.now(), dt = (now - lastT)/1000;
-        if (dt > 0.2){ const speed = (e.loaded - lastLoaded) / dt; spd.textContent = human(speed) + '/s'; lastT = now; lastLoaded = e.loaded; }
+        const now = Date.now(), dt = (now - item.lastT)/1000;
+        if (dt > 0.2){ const speed = (e.loaded - item.lastLoaded) / dt; spd.textContent = human(speed) + '/s'; item.lastT = now; item.lastLoaded = e.loaded; }
       }
     };
     await new Promise((resolve)=>{
       xhr.onreadystatechange = async ()=>{
         if (xhr.readyState===4){
-          currentXhr = null;
+          item.xhr = null;
           if (xhr.status>=200 && xhr.status<300){
-            try{
+            try {
               const j = JSON.parse(xhr.responseText);
               if (j.ok && j.saved && j.saved.length){
-                const fileId = j.saved[0].id;
+                const id = j.saved[0].id;
+                uploadedNames.add(item.file.name);
+                if (item.hash) uploadedHashes.add(item.hash);
                 links.style.display='flex';
                 copyBtn.onclick = async ()=>{
-                  const r = await fetch('/api/getlink',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: fileId })});
+                  const r = await fetch('/api/getlink',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id })});
                   const g = await r.json();
                   if (g.ok){ await navigator.clipboard.writeText(g.directUrl); toast('Link copied','ok'); }
                 };
-                finishedByName.add(file.name);
-                if (file._sha) finishedByHash.add(file._sha);
-                sessionStorage.setItem('finishedByName', JSON.stringify(Array.from(finishedByName)));
-                sessionStorage.setItem('finishedByHash', JSON.stringify(Array.from(finishedByHash)));
               }
-            }catch(e){ console.error(e); }
+            }catch{ toast('Failed','err'); }
           } else {
             spd.textContent = 'failed'; toast('Upload failed','err');
           }
@@ -210,9 +207,14 @@
       };
       xhr.send(fd);
     });
-    btnCancel.disabled = true;
   }
-})();
+  uploading = false; setDisabled(false); btnCancel.disabled = true;
+}
+
+function setDisabled(d){
+  btnBrowse.disabled = d; picker.disabled = d;
+  if (d) queue.classList.add('ghost'); else queue.classList.remove('ghost');
+}
 </script>
 </body>
 </html>

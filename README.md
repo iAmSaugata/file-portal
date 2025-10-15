@@ -1,9 +1,9 @@
-# File Management Portal (v9)
+# File Management Portal — v6
 
-**Fixes**
-- Drag & Drop now handled **globally**: dropping files anywhere on the page is captured and fed into the queue (with default prevented), so the browser never navigates away.
-- Dropzone is also **clickable** (opens the file picker).
-- **Browse** works even without JS (via `<label for="picker">`), and also with JS.
-- **Done** links to `/dashboard?r=TIMESTAMP` and the dashboard route is `Cache-Control: no-store` so it always reloads the latest list.
-
-Other features from earlier versions remain (auto uploads, SHA‑256 dedupe, toasts, etc.).
+- No horizontal scroll; darker header bar with bold title + Sign Out.
+- Upload: instant start (drag/drop or browse), cancel only when active, Done => dashboard.
+- Duplicate prevention: skips by **name** and by **SHA‑256** content hash (worker).
+- Dashboard: search by **name or comments**, comments column removed; date shown below name; 📜 tooltip icon when comments exist.
+- Filename shows fully; beyond 25 chars shows highlighted ellipsis + tooltip.
+- Toasters: blue (info), green (copied), red (delete/fail).
+- Dockerized; bcrypt password login optional; 24h link expiry & rate limits.

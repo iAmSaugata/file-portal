@@ -24,13 +24,13 @@
   <div class="container">
     <div class="card" style="max-width: 1100px;">
       <div class="search-right" style="margin:6px 0;">
-        <input id="search" class="small-compact" type="text" placeholder="Search by name or comments…" style="padding:6px 8px;border:1px solid #d1d5db;border-radius:8px;min-width:260px">
-        <button id="searchBtn" class="btn btn-muted small-compact">Search</button>
+        <input id="search" class="small-compact" type="text" placeholder="Search name or comments..." style="padding:6px 8px;border:1px solid #d1d5db;border-radius:8px">
+        <button class="btn btn-muted small-compact" onclick="clearSearch()">Search</button>
       </div>
 
       <div class="controls-row">
         <div class="controls-left">
-          <button id="btnBulkDelete" class="btn btn-danger" disabled onclick="bulkDelete()">Remove Selected</button>
+          <button id="btnBulkDelete" class="btn btn-danger" disabled>Remove Selected</button>
         </div>
         <div class="controls-right">
           <a href="/upload"><button class="btn btn-blue">File Upload</button></a>
@@ -42,32 +42,31 @@
           <thead>
             <tr>
               <th style="width: 80px;">Select</th>
-              <th>File</th>
-              <th>Size</th>
+              <th>File Name</th>
+              <th>File Size</th>
               <th style="text-align:center;">Action</th>
             </tr>
           </thead>
           <tbody>
-            <% for (const f of files) { 
-               const full = f.original_name;
-               const short = full.length > 30 ? (full.slice(0,30) + '<span class="ellipsis" title="'+full+'">…</span>') : full;
-               const hasC = !!(f.comments && f.comments.trim().length);
-            %>
+            <% for (const f of files) { %>
               <tr data-name="<%= f.original_name.toLowerCase() %>" data-comments="<%= (f.comments||'').toLowerCase() %>">
                 <td><input type="checkbox" value="<%= f.id %>"/></td>
                 <td>
-                  <div class="filecell">
-                    <div class="filemain">
-                      <%= hasC ? '<span title="'+(f.comments||'').replace(/"/g,'&quot;')+'">📜</span>' : '' %>
-                      <div class="filename"><span title="<%= f.original_name %>"><%- short %></span></div>
-                    </div>
+                  <% const showName = f.original_name;
+                     const long = showName.length > 25;
+                     const display = long ? (showName.slice(0,25) + '<span style="color:#2563eb">...</span>') : showName; %>
+                  <div class="filename" title="<%= long ? showName : '' %>" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                    <span><%- display %></span>
+                    <% if (f.comments) { %><span title="<%= f.comments %>">📜</span><% } %>
                   </div>
-                  <div class="date-small"><%= new Date(f.uploaded_at).toLocaleString() %></div>
+                  <div class="small" style="color:#6b7280"><%= new Date(f.uploaded_at).toLocaleString() %></div>
                 </td>
                 <td><%= (Math.round(f.size/1024)) %> KB</td>
-                <td style="text-align:center;">
-                  <button class="btn btn-primary btn-getlink" data-id="<%= f.id %>">GetLink</button>
-                  <button class="btn btn-danger btn-delete" data-id="<%= f.id %>">Delete</button>
+                <td>
+                  <div class="actions">
+                    <button class="btn btn-primary" onclick="getLink(<%= f.id %>)">GetLink</button>
+                    <button class="btn btn-danger" onclick="(async()=>{ if(confirm('Delete &quot;<%= f.original_name %>&quot;?')){ const r=await fetch('/api/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids:[<%= f.id %>]})}); const j=await r.json(); if(j.ok){ toast('Deleted','err'); location.reload(); } else { toast('Failed','err'); } } })()">Delete</button>
+                  </div>
                 </td>
               </tr>
             <% } %>
