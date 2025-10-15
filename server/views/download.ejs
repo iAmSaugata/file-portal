@@ -18,7 +18,8 @@
           <button class="btn btn-muted" onclick="copyDirect()">Copy direct link</button>
         </div>
         <div class="small" style="margin-top:10px">
-          CLI: <code>wget -O "<%= fileName %>" <span id="u"></span></code>
+          CLI: <code id="wget">wget -O "<%= fileName %>" <span id="u"></span></code>
+          <button class="btn btn-muted small" onclick="copyWget()">copy</button>
         </div>
       </div>
       <div class="footer"><b><%= footerText %></b></div>
@@ -27,7 +28,8 @@
 <script>
 const url = location.origin + "/dl/<%= token %>";
 document.getElementById('u').innerText = url;
-function copyDirect(){ navigator.clipboard.writeText(url); }
+function copyDirect(){ navigator.clipboard.writeText(url).then(()=>alert('Copied!')); }
+function copyWget(){ const t = 'wget -O "' + <%- JSON.stringify(fileName) %> + '" ' + url; navigator.clipboard.writeText(t).then(()=>alert('Copied!')); }
 </script>
 </body>
 </html>

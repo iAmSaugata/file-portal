@@ -13,7 +13,7 @@
     <div class="topbar-inner">
       <div class="topbar-title">
         <% if (brandLogo) { %><img src="<%= brandLogo %>" alt="logo"/><% } %>
-        <span>File Management</span>
+        <span><%= brandTitle %></span>
       </div>
       <div>
         <a href="/logout"><button class="btn btn-signout small-compact">Sign Out</button></a>
@@ -24,8 +24,7 @@
   <div class="container">
     <div class="card" style="max-width: 1100px;">
       <div class="search-right" style="margin:6px 0;">
-        <input id="search" class="small-compact" type="text" placeholder="Search name or comments..." style="padding:6px 8px;border:1px solid #d1d5db;border-radius:8px">
-        <button class="btn btn-muted small-compact" onclick="clearSearch()">Search</button>
+        <input id="search" class="small-compact" type="text" placeholder="Search by name or comments…" style="padding:6px 8px;border:1px solid #d1d5db;border-radius:8px;min-width:260px">
       </div>
 
       <div class="controls-row">
@@ -42,36 +41,33 @@
           <thead>
             <tr>
               <th style="width: 80px;">Select</th>
-              <th>File Name</th>
-              <th>File Size</th>
+              <th>File</th>
+              <th>Size</th>
               <th style="text-align:center;">Action</th>
-              <th>Date</th>
             </tr>
           </thead>
           <tbody>
-            <% for (const f of files) {
-              const short = f.original_name.length > 10 ? (f.original_name.slice(0,10) + '…') : f.original_name;
+            <% for (const f of files) { 
+               const full = f.original_name;
+               const short = full.length > 25 ? (full.slice(0,25) + '<span class="ellipsis" title="'+full+'">…</span>') : full;
+               const hasC = !!(f.comments && f.comments.trim().length);
             %>
-              <tr data-name="<%= f.original_name.toLowerCase() %>" data-search="<%= (f.original_name + ' ' + (f.comments||'')).toLowerCase() %>">
+              <tr data-name="<%= f.original_name.toLowerCase() %>" data-comments="<%= (f.comments||'').toLowerCase() %>">
                 <td><input type="checkbox" value="<%= f.id %>"/></td>
                 <td>
-                  <div class="name-cell">
-                    <div class="filename" title="<%= f.original_name %>">
-                      <span class="filename-clip"><%= short %></span><span class="filename-ellipsis">…</span>
+                  <div class="filecell">
+                    <div class="filemain">
+                      <%= hasC ? '<span title="'+(f.comments||'').replace(/"/g,'&quot;')+'">📜</span>' : '' %>
+                      <div class="filename"><span title="<%= f.original_name %>"><%- short %></span></div>
                     </div>
-                    <% if (f.comments) { %>
-                      <span class="comment-icon" data-tip="<%= f.comments %>">📜</span>
-                    <% } %>
                   </div>
+                  <div class="date-small"><%= new Date(f.uploaded_at).toLocaleString() %></div>
                 </td>
                 <td><%= (Math.round(f.size/1024)) %> KB</td>
-                <td>
-                  <div class="actions">
-                    <button class="btn btn-primary" onclick="getLink(<%= f.id %>)">GetLink</button>
-                    <button class="btn btn-danger" onclick="deleteOne(<%= f.id %>, '<%- f.original_name.replace(/"/g,'\"') %>')">Delete</button>
-                  </div>
+                <td style="text-align:center;">
+                  <button class="btn btn-primary btn-getlink" data-id="<%= f.id %>">GetLink</button>
+                  <button class="btn btn-danger btn-delete" data-id="<%= f.id %>">Delete</button>
                 </td>
-                <td><%= new Date(f.uploaded_at).toLocaleString() %></td>
               </tr>
             <% } %>
           </tbody>

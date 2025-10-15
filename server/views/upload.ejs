@@ -9,16 +9,6 @@
   <style>
     .upload-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:18px; }
     @media (max-width: 860px){ .upload-grid{ grid-template-columns: 1fr; } }
-    .queue-item{ background:#fff; border:1px solid #eef0f5; border-radius:12px; padding:10px 12px; margin:10px 0; }
-    .queue-h{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
-    .queue-name{ font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width: 260px; }
-    .queue-meta{ font-size:12px; color:#6b7280; }
-    .q-actions{ display:flex; gap:8px; }
-    .x{ cursor:pointer; color:#b91c1c; }
-    .bar{ height:10px; background:#e5e7eb; border-radius:8px; overflow:hidden; margin-top:8px; }
-    .bar > div{ height:100%; width:0%; background: linear-gradient(90deg,#60a5fa,#93c5fd); transition: width 0.1s linear; }
-    .two-btns{ display:flex; gap:10px; }
-    .ghost{ opacity:.5; pointer-events:none; }
   </style>
 </head>
 <body>
@@ -26,7 +16,7 @@
     <div class="topbar-inner">
       <div class="topbar-title">
         <% if (brandLogo) { %><img src="<%= brandLogo %>" alt="logo"/><% } %>
-        <span>File Management</span>
+        <span><%= brandTitle %></span>
       </div>
       <div>
         <a href="/logout"><button class="btn btn-signout small-compact">Sign Out</button></a>
@@ -38,7 +28,7 @@
     <div class="card" style="max-width: 980px; position: relative;">
       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px">
         <h2 style="margin:0">Upload Files</h2>
-        <button id="btnDone" class="btn btn-primary" onclick="location.href='/dashboard'">Done</button>
+        <button id="btnDone" class="btn btn-primary">Done</button>
       </div>
 
       <div class="upload-grid">
@@ -73,113 +63,159 @@
   </div>
 
 <script>
+// Toast helper (light inline copy, not to conflict with dashboard)
+function toast(msg, type='info'){
+  let wrap = document.querySelector('.toast-wrap');
+  if(!wrap){ wrap=document.createElement('div'); wrap.className='toast-wrap'; document.body.appendChild(wrap); }
+  const t=document.createElement('div'); t.className='toast '+(type==='ok'?'ok':type==='err'?'err':'info'); t.textContent=msg;
+  wrap.appendChild(t);
+  setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateY(-4px)'; }, 2600);
+  setTimeout(()=>{ wrap.removeChild(t); }, 3200);
+}
+
 const zone = document.getElementById('zone');
 const picker = document.getElementById('picker');
 const btnBrowse = document.getElementById('btnBrowse');
 const btnCancel = document.getElementById('btnCancel');
+const btnDone = document.getElementById('btnDone');
 const queue = document.getElementById('queue');
 const commentsEl = document.getElementById('comments');
 
-let q = [];
-let uploadedNames = new Set();
-let queuedNames = new Set();
-let uploading = false;
+btnDone.onclick = ()=>{ window.location.href='/dashboard'; };
+
+let currentXhr = null;
+let finishedByName = new Set(JSON.parse(sessionStorage.getItem('finishedByName') || '[]'));
+let finishedByHash = new Set(JSON.parse(sessionStorage.getItem('finishedByHash') || '[]'));
 
 btnBrowse.onclick = () => picker.click();
-picker.onchange = () => { addFiles(Array.from(picker.files)); maybeStart(); };
+picker.onchange = () => handleFiles(Array.from(picker.files));
 
 zone.ondragover = (e)=>{ e.preventDefault(); zone.style.filter='brightness(1.05)'; };
 zone.ondragleave = ()=>{ zone.style.filter=''; };
-zone.ondrop = (e)=>{ e.preventDefault(); zone.style.filter=''; addFiles(Array.from(e.dataTransfer.files)); maybeStart(); };
+zone.ondrop = (e)=>{ e.preventDefault(); zone.style.filter=''; handleFiles(Array.from(e.dataTransfer.files)); };
 
-function human(n){
-  const u=['B','KB','MB','GB','TB']; let i=0; let v=n;
-  while(v>=1024 && i<u.length-1){ v/=1024; i++; }
-  return (Math.round(v*10)/10)+' '+u[i];
+function human(n){ const u=['B','KB','MB','GB','TB']; let i=0,v=n; while(v>=1024 && i<u.length-1){ v/=1024; i++; } return (Math.round(v*10)/10)+' '+u[i]; }
+
+function createWorker(){
+  const code = \`
+  self.onmessage = async (e) => {
+    const file = e.data;
+    const buf = await file.arrayBuffer();
+    const hashBuf = await crypto.subtle.digest('SHA-256', buf);
+    const bytes = new Uint8Array(hashBuf);
+    let hex = ''; for (let b of bytes){ hex += b.toString(16).padStart(2, '0'); }
+    postMessage(hex);
+  };
+  \`;
+  const blob = new Blob([code], {type:'application/javascript'});
+  return new Worker(URL.createObjectURL(blob));
 }
-function addFiles(files){
-  files = files.filter(f => !uploadedNames.has(f.name) && !queuedNames.has(f.name));
-  for (const file of files){
+
+let uploading = false;
+async function handleFiles(files){
+  if (!files.length) return;
+  // Filter out duplicates by name already finished
+  files = files.filter(f => !finishedByName.has(f.name));
+  if (!files.length){ toast('All selected files already uploaded in this session','info'); return; }
+
+  // For each file, compute SHA-256 and skip if content already uploaded
+  const worker = createWorker();
+  const hashes = await Promise.all(files.map(f => new Promise(res=>{
+    worker.onmessage = (ev)=> res(ev.data);
+    worker.postMessage(f);
+  })));
+  worker.terminate();
+  const unique = [];
+  for (let i=0;i<files.length;i++){
+    if (finishedByHash.has(hashes[i])){
+      toast('Skipped duplicate (same content): '+files[i].name, 'info');
+    } else {
+      files[i]._sha = hashes[i];
+      unique.push(files[i]);
+    }
+  }
+  if (!unique.length) return;
+
+  // Enqueue UI rows and start uploads immediately, one by one
+  for (const file of unique){
     const row = document.createElement('div');
     row.className='queue-item';
-    row.innerHTML = `
+    row.innerHTML = \`
       <div class="queue-h">
-        <div class="queue-name" title="${file.name}">${file.name}</div>
-        <div class="q-actions">
-          <span class="queue-meta">${human(file.size)}</span>
-          <span class="x" title="Remove from queue">×</span>
-        </div>
+        <div class="queue-name" title="\${file.name}">\${file.name}</div>
+        <div class="q-actions"><span class="queue-meta">\${human(file.size)}</span></div>
       </div>
       <div class="bar"><div></div></div>
       <div class="queue-meta"><span class="pct">0%</span> • <span class="spd">0 KB/s</span></div>
       <div class="q-links" style="margin-top:6px; display:none; gap:6px">
         <button class="btn btn-muted small copylink">Copy Link</button>
-      </div>`;
-    const obj = { file, el: row, lastT: Date.now(), lastLoaded:0, xhr:null, fileId:null };
-    row.querySelector('.x').onclick = ()=>{ if (uploading) return; q = q.filter(e => e !== obj); queuedNames.delete(file.name); queue.removeChild(row); };
-    queue.appendChild(row); q.push(obj); queuedNames.add(file.name);
+      </div>\`;
+    queue.appendChild(row);
+    await uploadOne(file, row);
   }
 }
-btnCancel.onclick = ()=>{ if (!uploading) return; const cur = q.find(x=>x.xhr); if (cur && cur.xhr) cur.xhr.abort(); };
-function maybeStart(){ if(!uploading && q.length){ startUpload(); } }
 
-async function startUpload(){
-  if (uploading || !q.length) return;
-  uploading = true; setDisabled(true); btnCancel.disabled=false;
-  for (const item of q){
-    const fd = new FormData();
-    fd.append('files', item.file);
-    fd.append('comments', commentsEl.value || '');
+async function uploadOne(file, row){
+  uploading = true;
+  btnCancel.disabled = false;
+  const fd = new FormData();
+  fd.append('files', file);
+  fd.append('comments', commentsEl.value || '');
 
-    const xhr = new XMLHttpRequest(); item.xhr = xhr;
-    const bar = item.el.querySelector('.bar > div');
-    const pct = item.el.querySelector('.pct');
-    const spd = item.el.querySelector('.spd');
-    const links = item.el.querySelector('.q-links');
-    const copyBtn = item.el.querySelector('.copylink');
+  const xhr = new XMLHttpRequest(); currentXhr = xhr;
+  const bar = row.querySelector('.bar > div');
+  const pct = row.querySelector('.pct');
+  const spd = row.querySelector('.spd');
+  const links = row.querySelector('.q-links');
+  const copyBtn = row.querySelector('.copylink');
 
-    xhr.open('POST','/api/upload', true);
-    xhr.upload.onprogress = (e)=>{
-      if (e.lengthComputable){
-        const percent = Math.round((e.loaded/e.total)*100);
-        bar.style.width = percent + '%'; pct.textContent = percent + '%';
-        const now = Date.now(), dt = (now - item.lastT)/1000;
-        if (dt > 0.2){ const speed = (e.loaded - item.lastLoaded) / dt; spd.textContent = human(speed) + '/s'; item.lastT = now; item.lastLoaded = e.loaded; }
+  let lastT = Date.now(), lastLoaded = 0;
+
+  xhr.open('POST','/api/upload', true);
+  xhr.upload.onprogress = (e)=>{
+    if (e.lengthComputable){
+      const percent = Math.round((e.loaded/e.total)*100);
+      bar.style.width = percent + '%'; pct.textContent = percent + '%';
+      const now = Date.now(), dt = (now - lastT)/1000;
+      if (dt > 0.2){ const speed = (e.loaded - lastLoaded) / dt; spd.textContent = human(speed) + '/s'; lastT = now; lastLoaded = e.loaded; }
+    }
+  };
+  await new Promise((resolve)=>{
+    xhr.onreadystatechange = async ()=>{
+      if (xhr.readyState===4){
+        currentXhr = null;
+        if (xhr.status>=200 && xhr.status<300){
+          try{
+            const j = JSON.parse(xhr.responseText);
+            if (j.ok && j.saved && j.saved.length){
+              const fileId = j.saved[0].id;
+              links.style.display='flex';
+              copyBtn.onclick = async ()=>{
+                const r = await fetch('/api/getlink',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: fileId })});
+                const g = await r.json();
+                if (g.ok){ await navigator.clipboard.writeText(g.directUrl); toast('Link copied','ok'); }
+              };
+              finishedByName.add(file.name);
+              if (file._sha) finishedByHash.add(file._sha);
+              sessionStorage.setItem('finishedByName', JSON.stringify(Array.from(finishedByName)));
+              sessionStorage.setItem('finishedByHash', JSON.stringify(Array.from(finishedByHash)));
+            }
+          }catch{}
+        } else {
+          spd.textContent = 'failed'; toast('Upload failed','err');
+        }
+        resolve(true);
       }
     };
-    await new Promise((resolve)=>{
-      xhr.onreadystatechange = async ()=>{
-        if (xhr.readyState===4){
-          item.xhr = null;
-          if (xhr.status>=200 && xhr.status<300){
-            try {
-              const j = JSON.parse(xhr.responseText);
-              if (j.ok && j.saved && j.saved.length){
-                item.fileId = j.saved[0].id;
-                uploadedNames.add(item.file.name);
-                queuedNames.delete(item.file.name);
-                links.style.display='flex';
-                copyBtn.onclick = async ()=>{
-                  const r = await fetch('/api/getlink',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: item.fileId })});
-                  const g = await r.json();
-                  if (g.ok){ await navigator.clipboard.writeText(g.directUrl); }
-                };
-              }
-            }catch{}
-          } else { spd.textContent = 'failed'; }
-          resolve(true);
-        }
-      };
-      xhr.send(fd);
-    });
-  }
-  uploading = false; setDisabled(false); btnCancel.disabled=true;
+    xhr.send(fd);
+  });
+  uploading = false;
+  btnCancel.disabled = true;
 }
 
-function setDisabled(d){
-  btnBrowse.disabled = d; picker.disabled = d;
-  if (d) queue.classList.add('ghost'); else queue.classList.remove('ghost');
-}
+btnCancel.onclick = ()=>{
+  if (currentXhr){ currentXhr.abort(); toast('Canceled','info'); }
+};
 </script>
 </body>
 </html>
