@@ -7,11 +7,9 @@ function toast(msg, type='info'){
   setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateY(-4px)'; }, 2600);
   setTimeout(()=>{ wrap.removeChild(t); }, 3200);
 }
-
 function qs(s, el=document){ return el.querySelector(s); }
 function qsa(s, el=document){ return Array.from(el.querySelectorAll(s)); }
 
-// Search by name OR comments
 function filterTable() {
   const term = (qs('#search')?.value || '').toLowerCase();
   qsa('tbody tr').forEach(tr => {
@@ -25,7 +23,6 @@ function updateBulkState(){
   const btn = qs('#btnBulkDelete');
   if (btn) btn.disabled = !any;
 }
-
 async function bulkDelete(){
   const ids = qsa('tbody input[type="checkbox"]:checked').map(cb => cb.value);
   if (!ids.length) return;

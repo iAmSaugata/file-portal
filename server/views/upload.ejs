@@ -28,7 +28,7 @@
     <div class="card" style="max-width: 980px; position: relative;">
       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px">
         <h2 style="margin:0">Upload Files</h2>
-        <a id="btnDone" class="btn btn-primary" href="/dashboard">Done</a>
+        <a id="btnDone" class="btn btn-primary" href="/dashboard?r=<%= Date.now() %>">Done</a>
       </div>
 
       <div class="upload-grid">
@@ -38,7 +38,8 @@
             <p style="margin:0 0 4px 0">Drag and Drop Files</p>
             <p class="small" style="margin:0">Or</p>
             <div style="margin-top:8px">
-              <button id="btnBrowse" class="btn btn-blue" type="button">Browse</button>
+              <!-- Use a label as the Browse control so it works even if JS fails -->
+              <label id="btnBrowse" for="picker" class="btn btn-blue" style="cursor:pointer">Browse</label>
               <input id="picker" type="file" multiple style="display:none"/>
             </div>
           </div>
@@ -64,167 +65,152 @@
 
 <script>
 (function(){
-  try{
-    // Toast helper
-    function toast(msg, type='info'){
-      let wrap = document.querySelector('.toast-wrap');
-      if(!wrap){ wrap=document.createElement('div'); wrap.className='toast-wrap'; document.body.appendChild(wrap); }
-      const t=document.createElement('div'); t.className='toast '+(type==='ok'?'ok':type==='err'?'err':'info'); t.textContent=msg;
-      wrap.appendChild(t);
-      setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateY(-4px)'; }, 2600);
-      setTimeout(()=>{ wrap.removeChild(t); }, 3200);
+  // Toast helper
+  function toast(msg, type='info'){
+    let wrap = document.querySelector('.toast-wrap');
+    if(!wrap){ wrap=document.createElement('div'); wrap.className='toast-wrap'; document.body.appendChild(wrap); }
+    const t=document.createElement('div'); t.className='toast '+(type==='ok'?'ok':type==='err'?'err':'info'); t.textContent=msg;
+    wrap.appendChild(t);
+    setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateY(-4px)'; }, 2600);
+    setTimeout(()=>{ wrap.removeChild(t); }, 3200);
+  }
+
+  const zone = document.getElementById('zone');
+  const picker = document.getElementById('picker');
+  const btnCancel = document.getElementById('btnCancel');
+  const queue = document.getElementById('queue');
+  const commentsEl = document.getElementById('comments');
+
+  // Global DnD prevent default to avoid browser opening file when dropped outside zone
+  ['dragenter','dragover','dragleave','drop'].forEach(evt => {
+    document.addEventListener(evt, e => { e.preventDefault(); e.stopPropagation(); }, false);
+  });
+  document.addEventListener('drop', (e)=>{
+    // If dropped outside the zone, still handle it
+    if (!zone.contains(e.target)) handleFiles(Array.from(e.dataTransfer.files));
+  });
+
+  // Clicking the dropzone opens picker (works even if label missed)
+  zone.addEventListener('click', (e)=>{
+    if (e.target.tagName !== 'LABEL') picker.click();
+  });
+
+  // Handle picker changes
+  picker.addEventListener('change', ()=> handleFiles(Array.from(picker.files)));
+
+  function human(n){ const u=['B','KB','MB','GB','TB']; let i=0,v=n; while(v>=1024 && i<u.length-1){ v/=1024; i++; } return (Math.round(v*10)/10)+' '+u[i]; }
+
+  function createWorker(){
+    const code = \`
+    self.onmessage = async (e) => {
+      const file = e.data;
+      const buf = await file.arrayBuffer();
+      const hashBuf = await crypto.subtle.digest('SHA-256', buf);
+      const bytes = new Uint8Array(hashBuf);
+      let hex = ''; for (let b of bytes){ hex += b.toString(16).padStart(2, '0'); }
+      postMessage(hex);
+    };
+    \`;
+    const blob = new Blob([code], {type:'application/javascript'});
+    return new Worker(URL.createObjectURL(blob));
+  }
+  const finishedByName = new Set(JSON.parse(sessionStorage.getItem('finishedByName') || '[]'));
+  const finishedByHash = new Set(JSON.parse(sessionStorage.getItem('finishedByHash') || '[]'));
+
+  async function handleFiles(files){
+    if (!files.length) return;
+
+    // Filter duplicates by name already finished
+    files = files.filter(f => !finishedByName.has(f.name));
+    if (!files.length){ toast('All selected files already uploaded in this session','info'); return; }
+
+    // Compute SHA-256 and filter by content
+    const hashes = await Promise.all(files.map(f => new Promise(res=>{
+      const w = createWorker(); w.onmessage = ev => { res(ev.data); w.terminate(); }; w.postMessage(f);
+    })));
+    const unique = [];
+    for (let i=0;i<files.length;i++){
+      if (finishedByHash.has(hashes[i])){
+        toast('Skipped duplicate (same content): '+files[i].name,'info');
+      } else { files[i]._sha = hashes[i]; unique.push(files[i]); }
     }
+    if (!unique.length) return;
 
-    const zone = document.getElementById('zone');
-    const picker = document.getElementById('picker');
-    const btnBrowse = document.getElementById('btnBrowse');
-    const btnCancel = document.getElementById('btnCancel');
-    const queue = document.getElementById('queue');
-    const commentsEl = document.getElementById('comments');
-
-    // Click zone to open picker as convenience
-    zone.addEventListener('click', (e)=>{
-      // avoid when clicking the Browse button which already has handler
-      if(e.target.id !== 'btnBrowse') picker.click();
-    });
-
-    // Done is an anchor href="/dashboard" so it works even if JS fails
-
-    let currentXhr = null;
-    let finishedByName = new Set(JSON.parse(sessionStorage.getItem('finishedByName') || '[]'));
-    let finishedByHash = new Set(JSON.parse(sessionStorage.getItem('finishedByHash') || '[]'));
-
-    btnBrowse.addEventListener('click', ()=> picker.click());
-    picker.addEventListener('change', ()=> handleFiles(Array.from(picker.files)));
-
-    zone.addEventListener('dragover', (e)=>{ e.preventDefault(); zone.style.filter='brightness(1.05)'; });
-    zone.addEventListener('dragleave', ()=>{ zone.style.filter=''; });
-    zone.addEventListener('drop', (e)=>{ e.preventDefault(); zone.style.filter=''; handleFiles(Array.from(e.dataTransfer.files)); });
-
-    function human(n){ const u=['B','KB','MB','GB','TB']; let i=0,v=n; while(v>=1024 && i<u.length-1){ v/=1024; i++; } return (Math.round(v*10)/10)+' '+u[i]; }
-
-    function createWorker(){
-      const code = \`
-      self.onmessage = async (e) => {
-        const file = e.data;
-        const buf = await file.arrayBuffer();
-        const hashBuf = await crypto.subtle.digest('SHA-256', buf);
-        const bytes = new Uint8Array(hashBuf);
-        let hex = ''; for (let b of bytes){ hex += b.toString(16).padStart(2, '0'); }
-        postMessage(hex);
-      };
-      \`;
-      const blob = new Blob([code], {type:'application/javascript'});
-      return new Worker(URL.createObjectURL(blob));
+    // Upload sequentially for simplicity
+    for (const file of unique){
+      const row = document.createElement('div');
+      row.className='queue-item';
+      row.innerHTML = \`
+        <div class="queue-h">
+          <div class="queue-name" title="\${file.name}">\${file.name}</div>
+          <div class="q-actions"><span class="queue-meta">\${human(file.size)}</span></div>
+        </div>
+        <div class="bar"><div></div></div>
+        <div class="queue-meta"><span class="pct">0%</span> • <span class="spd">0 KB/s</span></div>
+        <div class="q-links" style="margin-top:6px; display:none; gap:6px">
+          <button class="btn btn-muted small copylink" type="button">Copy Link</button>
+        </div>\`;
+      queue.appendChild(row);
+      await uploadOne(file, row);
     }
+  }
 
-    async function hashFile(file){
-      return new Promise(res=>{
-        const w = createWorker();
-        w.onmessage = ev => { res(ev.data); w.terminate(); };
-        w.postMessage(file);
-      });
-    }
+  let currentXhr = null;
+  btnCancel.addEventListener('click', ()=>{ if (currentXhr){ currentXhr.abort(); toast('Canceled','info'); } });
 
-    async function handleFiles(files){
-      if (!files.length) return;
-      // name-level dedupe
-      files = files.filter(f => !finishedByName.has(f.name));
-      if (!files.length){ toast('All selected files already uploaded in this session','info'); return; }
+  async function uploadOne(file, row){
+    btnCancel.disabled = false;
+    const fd = new FormData();
+    fd.append('files', file);
+    fd.append('comments', commentsEl.value || '');
 
-      // hash-level dedupe
-      const hashes = await Promise.all(files.map(f => hashFile(f)));
-      const unique = [];
-      for (let i=0;i<files.length;i++){
-        if (finishedByHash.has(hashes[i])){
-          toast('Skipped duplicate (same content): '+files[i].name, 'info');
-        } else {
-          files[i]._sha = hashes[i];
-          unique.push(files[i]);
-        }
+    const xhr = new XMLHttpRequest(); currentXhr = xhr;
+    const bar = row.querySelector('.bar > div');
+    const pct = row.querySelector('.pct');
+    const spd = row.querySelector('.spd');
+    const links = row.querySelector('.q-links');
+    const copyBtn = row.querySelector('.copylink');
+
+    let lastT = Date.now(), lastLoaded = 0;
+    xhr.open('POST','/api/upload', true);
+    xhr.upload.onprogress = (e)=>{
+      if (e.lengthComputable){
+        const percent = Math.round((e.loaded/e.total)*100);
+        bar.style.width = percent + '%'; pct.textContent = percent + '%';
+        const now = Date.now(), dt = (now - lastT)/1000;
+        if (dt > 0.2){ const speed = (e.loaded - lastLoaded) / dt; spd.textContent = human(speed) + '/s'; lastT = now; lastLoaded = e.loaded; }
       }
-      if (!unique.length) return;
-
-      for (const file of unique){
-        const row = document.createElement('div');
-        row.className='queue-item';
-        row.innerHTML = \`
-          <div class="queue-h">
-            <div class="queue-name" title="\${file.name}">\${file.name}</div>
-            <div class="q-actions"><span class="queue-meta">\${human(file.size)}</span></div>
-          </div>
-          <div class="bar"><div></div></div>
-          <div class="queue-meta"><span class="pct">0%</span> • <span class="spd">0 KB/s</span></div>
-          <div class="q-links" style="margin-top:6px; display:none; gap:6px">
-            <button class="btn btn-muted small copylink" type="button">Copy Link</button>
-          </div>\`;
-        queue.appendChild(row);
-        await uploadOne(file, row);
-      }
-    }
-
-    async function uploadOne(file, row){
-      btnCancel.disabled = false;
-      const fd = new FormData();
-      fd.append('files', file);
-      fd.append('comments', commentsEl.value || '');
-
-      const xhr = new XMLHttpRequest(); currentXhr = xhr;
-      const bar = row.querySelector('.bar > div');
-      const pct = row.querySelector('.pct');
-      const spd = row.querySelector('.spd');
-      const links = row.querySelector('.q-links');
-      const copyBtn = row.querySelector('.copylink');
-
-      let lastT = Date.now(), lastLoaded = 0;
-
-      xhr.open('POST','/api/upload', true);
-      xhr.upload.onprogress = (e)=>{
-        if (e.lengthComputable){
-          const percent = Math.round((e.loaded/e.total)*100);
-          bar.style.width = percent + '%'; pct.textContent = percent + '%';
-          const now = Date.now(), dt = (now - lastT)/1000;
-          if (dt > 0.2){ const speed = (e.loaded - lastLoaded) / dt; spd.textContent = human(speed) + '/s'; lastT = now; lastLoaded = e.loaded; }
-        }
-      };
-      await new Promise((resolve)=>{
-        xhr.onreadystatechange = async ()=>{
-          if (xhr.readyState===4){
-            currentXhr = null;
-            if (xhr.status>=200 && xhr.status<300){
-              try{
-                const j = JSON.parse(xhr.responseText);
-                if (j.ok && j.saved && j.saved.length){
-                  const fileId = j.saved[0].id;
-                  links.style.display='flex';
-                  copyBtn.onclick = async ()=>{
-                    const r = await fetch('/api/getlink',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: fileId })});
-                    const g = await r.json();
-                    if (g.ok){ await navigator.clipboard.writeText(g.directUrl); toast('Link copied','ok'); }
-                  };
-                  finishedByName.add(file.name);
-                  if (file._sha) finishedByHash.add(file._sha);
-                  sessionStorage.setItem('finishedByName', JSON.stringify(Array.from(finishedByName)));
-                  sessionStorage.setItem('finishedByHash', JSON.stringify(Array.from(finishedByHash)));
-                }
-              }catch{}
-            } else {
-              spd.textContent = 'failed'; toast('Upload failed','err');
-            }
-            resolve(true);
+    };
+    await new Promise((resolve)=>{
+      xhr.onreadystatechange = async ()=>{
+        if (xhr.readyState===4){
+          currentXhr = null;
+          if (xhr.status>=200 && xhr.status<300){
+            try{
+              const j = JSON.parse(xhr.responseText);
+              if (j.ok && j.saved && j.saved.length){
+                const fileId = j.saved[0].id;
+                links.style.display='flex';
+                copyBtn.onclick = async ()=>{
+                  const r = await fetch('/api/getlink',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: fileId })});
+                  const g = await r.json();
+                  if (g.ok){ await navigator.clipboard.writeText(g.directUrl); toast('Link copied','ok'); }
+                };
+                finishedByName.add(file.name);
+                if (file._sha) finishedByHash.add(file._sha);
+                sessionStorage.setItem('finishedByName', JSON.stringify(Array.from(finishedByName)));
+                sessionStorage.setItem('finishedByHash', JSON.stringify(Array.from(finishedByHash)));
+              }
+            }catch(e){ console.error(e); }
+          } else {
+            spd.textContent = 'failed'; toast('Upload failed','err');
           }
-        };
-        xhr.send(fd);
-      });
-      btnCancel.disabled = true;
-    }
-
-    btnCancel.addEventListener('click', ()=>{
-      if (currentXhr){ currentXhr.abort(); toast('Canceled','info'); }
+          resolve(true);
+        }
+      };
+      xhr.send(fd);
     });
-  }catch(e){
-    console.error(e);
-    alert('A script error occurred on the upload page.');
+    btnCancel.disabled = true;
   }
 })();
 </script>

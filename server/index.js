@@ -76,13 +76,16 @@ app.post('/login', loginLimiter, (req,res)=>{
   const ok = password && bcrypt.compareSync(password, AUTH_BCRYPT_HASH);
   if (ok){
     res.cookie('sess','ok',{signed:true,httpOnly:true,sameSite:'lax',maxAge:1000*60*60*24*30});
-    return res.status(200).send(`<!doctype html><meta charset="utf-8"><script>try{localStorage.setItem('fm_authed','1')}catch(e){};location.replace('/dashboard');</script>`);
+    return res.status(200).send(`<!doctype html><meta charset="utf-8"><script>try{localStorage.setItem('fm_authed','1')}catch(e){};location.replace('/dashboard?r='+Date.now());</script>`);
   }
   return res.status(401).render('login',{ error:'Invalid password. Please try again.' });
 });
 app.get('/logout', (req,res)=>{ res.clearCookie('sess'); res.redirect('/login'); });
 
-app.get('/dashboard', requireAuth, (req,res)=>{ const files = listFiles.all(); res.render('dashboard', { files, baseUrl: BASE_URL }); });
+app.get('/dashboard', requireAuth, (req,res)=>{
+  res.set('Cache-Control','no-store');
+  const files = listFiles.all(); res.render('dashboard', { files, baseUrl: BASE_URL });
+});
 
 const uploadDir = path.join(process.cwd(), 'uploads'); fs.mkdirSync(uploadDir, { recursive: true });
 const multerUpload = multer({ storage: multer.diskStorage({ destination: (req,f,cb)=>cb(null,uploadDir), filename:(req,f,cb)=>cb(null, nanoId()+path.extname(f.originalname||'')) }), limits: { fileSize: MAX_UPLOAD_MB*1024*1024 } });
