@@ -4,19 +4,22 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Login</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml"/>
   <link rel="stylesheet" href="/static/styles.css"/>
-  <% if (brandPrimary) { %><style>:root{ --primary:<%= brandPrimary %>; }</style><% } %>
+  <%- brandPrimary ? `<style>:root{ --primary:${brandPrimary} };</style>` : '' %>
 </head>
+
 <body>
-  <div class="login-wrap" style="background: var(--bg);">
-    <div class="card login-card" style="max-width: 420px;">
+  <div class="login-wrap">
+    <div class="card login-card">
       <h2 class="login-title">Login</h2>
       <% if (error) { %><div class="panel" style="color:#b91c1c; margin-bottom:10px"><%= error %></div><% } %>
       <form method="post" action="/login">
         <div style="display:flex; flex-direction:column; gap:10px;">
-          <input type="password" name="password" placeholder="Password" required style="padding:12px 14px; border:1px solid #d1d5db; border-radius:10px;"/>
-          <div style="display:flex; gap:10px; justify-content:flex-start;">
+          <input type="password" name="password" placeholder="Password" required style="padding:10px 12px; border:1px solid #d1d5db; border-radius:10px;"/>
+          <div class="login-actions" style="display:flex; gap:10px; justify-content:flex-end">
             <button type="reset" class="btn btn-muted">Clear</button>
+            <button type="button" class="btn btn-primary" onclick="location.reload()">Reload</button>
             <button type="submit" class="btn btn-primary">Login</button>
           </div>
         </div>

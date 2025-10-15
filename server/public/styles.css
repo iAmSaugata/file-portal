@@ -3,7 +3,6 @@
   --bg: #6f8ff0;
   --card: #ffffff;
   --primary: #1f7aec;
-  --primary-weak: #a9ccff;
   --danger: #e05353;
   --muted: #6b7280;
   --shadow: 0 10px 25px rgba(0,0,0,0.08);
@@ -11,14 +10,18 @@
 
 *{ box-sizing: border-box; }
 
-html, body { overflow-x: hidden; } /* No horizontal scroll */
+/* No horizontal scroll + no overscroll bounce */
+html, body { overflow-x: hidden; overscroll-behavior: none; }
 
+/* Disable text selection globally except inputs */
+body, body *:not(input):not(textarea) { user-select: none; }
 body{
   margin:0;
   min-height:100vh;
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
   background: var(--bg);
   color:#111827;
+  cursor: default;
 }
 
 .container{ max-width: 1100px; margin: 40px auto; padding: 0 16px; }
@@ -44,8 +47,7 @@ body{
 .btn-blue{ background:#93c5fd; }
 .btn-danger{ background:#ef4444; }
 .btn-muted{ background:#e5e7eb; color:#111; }
-
-.btn:disabled, .disabled{ background:#d1d5db !important; color:#6b7280 !important; cursor:not-allowed !important; position: relative; }
+.btn:disabled{ background:#d1d5db !important; color:#6b7280 !important; cursor:not-allowed !important; }
 
 .footer{ margin-top: 24px; text-align:center; font-size: 14px; font-weight: 700; }
 
@@ -62,28 +64,21 @@ tbody tr:hover{ transform: scale(1.01); box-shadow: 0 8px 18px rgba(0,0,0,0.08);
 .controls-row{ display:flex; gap:10px; align-items:center; justify-content:space-between; margin-bottom:8px; flex-wrap: wrap; }
 .controls-left, .controls-right{ display:flex; gap:10px; align-items:center; }
 
-/* Darker, larger title header */
-.topbar{ position: sticky; top:0; z-index:50; background: linear-gradient(180deg,#0f172a,#1f2937); color:#e5edff; }
-.topbar-inner{ max-width:1100px; margin:0 auto; padding:14px 16px; display:flex; align-items:center; justify-content:space-between; }
-.topbar-title{ display:flex; align-items:center; gap:10px; font-weight:900; color:#e5edff; font-size:26px; letter-spacing:.3px; }
+/* Top header bar (darker, bigger title) */
+.topbar{ position: sticky; top:0; z-index:50; background: linear-gradient(180deg,#0f172a,#1b2550); color:#e6edff; }
+.topbar-inner{ max-width:1100px; margin:0 auto; padding:14px 18px; display:flex; align-items:center; justify-content:space-between; }
+.topbar-title{ display:flex; align-items:center; gap:10px; font-weight:900; color:#e6edff; font-size:26px; }
+.topbar-title img{ height:24px; border-radius:6px; }
 .topbar .btn-signout{ background: rgba(255,255,255,0.25); color:#fff; box-shadow:none; }
 .topbar .btn-signout:hover{ filter: brightness(1.1); }
 
-/* Right-aligned search cluster */
-.search-right{ display:flex; gap:8px; justify-content:flex-end; align-items:center; }
+/* Center action buttons */
+td.actions-cell, td[style*="text-align:center"]{ text-align:center !important; }
+.actions{ display:inline-flex; align-items:center; justify-content:center; gap:8px; }
 
-/* Actions center */
-.actions{ display:flex; align-items:center; justify-content:center; gap:8px; }
-
-/* Toasts */
+/* Toasts (longer life) */
 .toast-wrap{ position: fixed; right: 16px; top: 16px; z-index: 9999; display:flex; flex-direction: column; gap:8px; }
-.toast{ padding:10px 14px; border-radius:10px; color:#fff; box-shadow: 0 8px 18px rgba(0,0,0,0.25); font-weight:600; transition: all .3s ease; }
+.toast{ padding:10px 14px; border-radius:10px; color:#fff; box-shadow: 0 8px 18px rgba(0,0,0,0.25); font-weight:600; }
 .toast.info{ background:#3b82f6; }
 .toast.ok{ background:#10b981; }
 .toast.err{ background:#ef4444; }
-
-/* Modal */
-.modal-overlay{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center; padding:16px; z-index:1000; }
-.modal-card{ background:#fff; border-radius:16px; box-shadow:0 20px 40px rgba(0,0,0,.25); max-width:560px; width:100%; padding:18px; }
-.modal-title{ font-weight:800; color:#d97706; font-size:20px; margin:0 0 6px 0; }
-.modal-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:14px; }

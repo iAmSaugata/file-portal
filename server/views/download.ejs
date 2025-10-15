@@ -4,9 +4,11 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Download • <%= brandTitle %></title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml"/>
   <link rel="stylesheet" href="/static/styles.css"/>
-  <% if (brandPrimary) { %><style>:root{ --primary:<%= brandPrimary %>; }</style><% } %>
+  <%- brandPrimary ? `<style>:root{ --primary:${brandPrimary} };</style>` : '' %>
 </head>
+
 <body>
   <div class="container">
     <div class="card" style="max-width: 520px; text-align:center;">
