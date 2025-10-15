@@ -1,25 +1,25 @@
 version: "3.8"
 services:
   file-portal:
-    build: .
+    build: ./server
     container_name: file-portal
     environment:
-      - PORT=${PORT:-8080}
+      - PORT=8080
       - SESSION_SECRET=${SESSION_SECRET:-change-me-please}
-      - AUTH_BCRYPT_HASH=${AUTH_BCRYPT_HASH:-}
+      - AUTH_BCRYPT_HASH=${AUTH_BCRYPT_HASH}
       - MAX_UPLOAD_MB=${MAX_UPLOAD_MB:-200}
       - BASE_URL=${BASE_URL:-}
       - BRAND_TITLE=${BRAND_TITLE:-File Management}
       - BRAND_LOGO_URL=${BRAND_LOGO_URL:-}
       - BRAND_PRIMARY_COLOR=${BRAND_PRIMARY_COLOR:-}
-      - FOOTER_TEXT=${FOOTER_TEXT:-Powered by ChatGPT © iAmSaugata}
+      - FOOTER_TEXT=${FOOTER_TEXT:-Powered by ChatGPT • © iAmSaugata}
       - RATE_LIMIT_WINDOW_MS=${RATE_LIMIT_WINDOW_MS:-900000}
       - RATE_LIMIT_MAX=${RATE_LIMIT_MAX:-200}
       - DOWNLOAD_RATE_LIMIT_MAX=${DOWNLOAD_RATE_LIMIT_MAX:-60}
       - LINK_TTL_MS=${LINK_TTL_MS:-86400000}
-    ports:
-      - "8080:8080"
     volumes:
-      - ./uploads:/app/uploads
-      - ./data:/app/data
+      - ./data/uploads:/app/uploads
+      - ./data/sqlite:/app/sqlite
+    ports:
+      - "9876:8080"
     restart: unless-stopped
