@@ -89,3 +89,11 @@ tbody tr:hover{ transform: scale(1.01); box-shadow: 0 8px 18px rgba(0,0,0,0.08);
 .modal{ background:#fff; border-radius:14px; padding:16px; max-width:520px; width:100%; box-shadow: var(--shadow); }
 .modal h3{ margin: 0 0 10px 0; }
 .modal .actions{ justify-content:flex-end; }
+
+/* Right-aligned search bar above File Upload */
+.search-right { 
+  display: flex; 
+  justify-content: flex-end; 
+  align-items: center; 
+  gap: 8px; 
+}
