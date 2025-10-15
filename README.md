@@ -1,16 +1,17 @@
-# File Management Portal — v7
+# File Management Portal — v8
 
-Fixes & Tweaks:
-- Download page has a **Done** button -> dashboard (refreshes list).
-- Dashboard actions wired via **event delegation**: *Remove Selected*, *GetLink*, *Delete* work reliably.
-- Search button renamed to **Clear** and clears input.
-- Filename truncation threshold raised to **60** chars; colored ellipsis + tooltip for full name.
-- Action buttons centered; darker header bar with bigger title.
+What's new
+- **Upload page**: Done button fixed (explicit JS handler).
+- **Modals**: Pretty confirm dialogs for *Delete* and *Delete Selected* (with list of names).
+- **Toasts**: Last a bit longer and include details (e.g., “Download link copied”, “<file> deleted successfully”). Bulk delete shows one toast **per file**.
+- **Header**: Darker shade, larger text for higher contrast.
+- **Search**: right-aligned cluster; “Clear” button clears value.
+- **Login**: Reload button removed (Clear + Login only).
 
-Deploy:
+Deploy
 ```bash
-unzip file-portal-v7.zip
-cd file-portal-v7
+unzip file-portal-v8.zip
+cd file-portal-v8
 docker compose up -d --build
-# http://<host>:9876
+# open http://<host>:9876
 ```

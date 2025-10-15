@@ -38,7 +38,7 @@
     <div class="card" style="max-width: 980px; position: relative;">
       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px">
         <h2 style="margin:0">Upload Files</h2>
-        <button id="btnDone" class="btn btn-primary" type="button" onclick="location.href='/dashboard'">Done</button>
+        <button id="btnDone" class="btn btn-primary" type="button">Done</button>
       </div>
 
       <div class="upload-grid">
@@ -74,17 +74,15 @@
   </div>
 
 <script>
-/* Toasts */
-function toast(msg, type='info'){
+// Toast + Worker + Upload logic (same as v7, with Done button wiring)
+function toast(msg, type='info', ms=4200){
   let wrap = document.querySelector('.toast-wrap');
   if(!wrap){ wrap=document.createElement('div'); wrap.className='toast-wrap'; document.body.appendChild(wrap); }
   const t=document.createElement('div'); t.className='toast '+(type==='ok'?'ok':type==='err'?'err':'info'); t.textContent=msg;
   wrap.appendChild(t);
-  setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateY(-4px)'; }, 2600);
-  setTimeout(()=>{ wrap.removeChild(t); }, 3200);
+  setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateY(-4px)'; }, Math.max(2400, ms-600));
+  setTimeout(()=>{ wrap.removeChild(t); }, ms);
 }
-
-// Worker for SHA-256
 const workerCode = () => {
   self.onmessage = async (e)=>{
     const file = e.data;
@@ -105,12 +103,12 @@ const picker = document.getElementById('picker');
 const btnBrowse = document.getElementById('btnBrowse');
 const btnCancel = document.getElementById('btnCancel');
 const queue = document.getElementById('queue');
-const commentsEl = document.getElementById('comments');
 
-let q = []; // {file, el, lastT, lastLoaded, xhr, fileId, hash}
-let uploading = false;
+let q = []; let uploading = false;
 const uploadedNames = new Set();
 const uploadedHashes = new Set();
+
+document.getElementById('btnDone').addEventListener('click', ()=>{ window.location.assign('/dashboard'); });
 
 btnBrowse.onclick = () => picker.click();
 picker.onchange = () => addFiles(Array.from(picker.files));
@@ -162,7 +160,6 @@ async function startUploads(){
     const item = q.shift();
     const fd = new FormData();
     fd.append('files', item.file);
-    fd.append('comments', commentsEl.value || '');
 
     const xhr = new XMLHttpRequest(); item.xhr = xhr;
     const bar = item.el.querySelector('.bar > div');
@@ -195,12 +192,12 @@ async function startUploads(){
                 copyBtn.onclick = async ()=>{
                   const r = await fetch('/api/getlink',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id })});
                   const g = await r.json();
-                  if (g.ok){ await navigator.clipboard.writeText(g.directUrl); toast('Link copied','ok'); }
+                  if (g.ok){ await navigator.clipboard.writeText(g.directUrl); toast('Download link copied','ok', 5000); }
                 };
               }
-            }catch{ toast('Failed','err'); }
+            }catch{ toast('Failed','err', 5000); }
           } else {
-            spd.textContent = 'failed'; toast('Upload failed','err');
+            spd.textContent = 'failed'; toast('Upload failed','err', 5000);
           }
           resolve(true);
         }

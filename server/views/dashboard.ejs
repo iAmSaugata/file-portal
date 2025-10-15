@@ -23,18 +23,18 @@
 
   <div class="container">
     <div class="card" style="max-width: 1100px;">
-      <div class="search-right" style="margin:6px 0;">
-        <input id="search" class="small-compact" type="text" placeholder="Search name or comments..." style="padding:6px 8px;border:1px solid #d1d5db;border-radius:8px">
-        <button class="btn btn-muted small-compact" onclick="clearSearch()">Clear</button>
-      </div>
-
-      <div class="controls-row">
+      <div class="controls-row" style="margin-top:2px;">
         <div class="controls-left">
           <button id="btnBulkDelete" class="btn btn-danger" disabled>Remove Selected</button>
         </div>
         <div class="controls-right">
           <a href="/upload"><button class="btn btn-blue">File Upload</button></a>
         </div>
+      </div>
+
+      <div class="search-right" style="margin:6px 0;">
+        <input id="search" class="small-compact" type="text" placeholder="Search name or comments..." style="padding:6px 8px;border:1px solid #d1d5db;border-radius:8px">
+        <button class="btn btn-muted small-compact" onclick="clearSearch()">Clear</button>
       </div>
 
       <div class="table-wrap">
@@ -49,7 +49,7 @@
           </thead>
           <tbody>
             <% for (const f of files) { %>
-              <tr data-name="<%= f.original_name.toLowerCase() %>" data-comments="<%= (f.comments||'').toLowerCase() %>">
+              <tr data-name="<%= f.original_name.toLowerCase() %>" data-comments="<%= (f.comments||'').toLowerCase() %>" data-fname="<%= f.original_name %>">
                 <td><input type="checkbox" value="<%= f.id %>"/></td>
                 <td>
                   <% const showName = f.original_name;

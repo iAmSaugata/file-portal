@@ -11,8 +11,7 @@
 
 *{ box-sizing: border-box; }
 
-/* No horizontal scroll */
-html, body { overflow-x: hidden; }
+html, body { overflow-x: hidden; } /* No horizontal scroll */
 
 body{
   margin:0;
@@ -54,36 +53,37 @@ body{
 table{ width:100%; border-collapse: separate; border-spacing: 0 10px; }
 thead th{ text-align:left; font-size: 13px; color: var(--muted); padding: 6px 10px; }
 tbody td{ background: #fff; padding: 12px 10px; border-top: 1px solid #eef0f5; border-bottom: 1px solid #eef0f5; vertical-align: top; }
-
 tbody tr{ transition: transform .08s ease, box-shadow .12s ease; }
 tbody tr:hover{ transform: scale(1.01); box-shadow: 0 8px 18px rgba(0,0,0,0.08); }
 
 .filename{ max-width: 760px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-.login-wrap{ min-height: 100vh; display:flex; align-items:center; justify-content:center; padding: 20px; }
-.login-card{ width: 100%; max-width: 380px; }
-.login-title{ margin-top:0; margin-bottom: 12px; }
-.login-actions{ display:grid; grid-template-columns: repeat(3,1fr); gap:10px; margin-top: 10px; }
-
-.dropzone{ border: 2px dashed #93c5fd; border-radius: 16px; padding: 30px; text-align:center; background: #f8fbff; }
-
-.actions{ display:flex; align-items:center; justify-content:center; gap:8px; }
 .small{ font-size: 12px; }
 
 .controls-row{ display:flex; gap:10px; align-items:center; justify-content:space-between; margin-bottom:8px; flex-wrap: wrap; }
 .controls-left, .controls-right{ display:flex; gap:10px; align-items:center; }
 
-/* Top header bar (darker, bigger title) */
-.topbar{ position: sticky; top:0; z-index:50; background: linear-gradient(180deg,#1f2a5a,#2d3b8b); color:#ecf2ff; }
-.topbar-inner{ max-width:1100px; margin:0 auto; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; }
-.topbar-title{ display:flex; align-items:center; gap:10px; font-weight:900; color:#ecf2ff; font-size:22px; }
-.topbar-title img{ height:24px; border-radius:6px; }
+/* Darker, larger title header */
+.topbar{ position: sticky; top:0; z-index:50; background: linear-gradient(180deg,#0f172a,#1f2937); color:#e5edff; }
+.topbar-inner{ max-width:1100px; margin:0 auto; padding:14px 16px; display:flex; align-items:center; justify-content:space-between; }
+.topbar-title{ display:flex; align-items:center; gap:10px; font-weight:900; color:#e5edff; font-size:26px; letter-spacing:.3px; }
 .topbar .btn-signout{ background: rgba(255,255,255,0.25); color:#fff; box-shadow:none; }
 .topbar .btn-signout:hover{ filter: brightness(1.1); }
 
+/* Right-aligned search cluster */
+.search-right{ display:flex; gap:8px; justify-content:flex-end; align-items:center; }
+
+/* Actions center */
+.actions{ display:flex; align-items:center; justify-content:center; gap:8px; }
+
 /* Toasts */
 .toast-wrap{ position: fixed; right: 16px; top: 16px; z-index: 9999; display:flex; flex-direction: column; gap:8px; }
-.toast{ padding:10px 14px; border-radius:10px; color:#fff; box-shadow: 0 8px 18px rgba(0,0,0,0.25); font-weight:600; }
+.toast{ padding:10px 14px; border-radius:10px; color:#fff; box-shadow: 0 8px 18px rgba(0,0,0,0.25); font-weight:600; transition: all .3s ease; }
 .toast.info{ background:#3b82f6; }
 .toast.ok{ background:#10b981; }
 .toast.err{ background:#ef4444; }
+
+/* Modal */
+.modal-overlay{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center; padding:16px; z-index:1000; }
+.modal-card{ background:#fff; border-radius:16px; box-shadow:0 20px 40px rgba(0,0,0,.25); max-width:560px; width:100%; padding:18px; }
+.modal-title{ font-weight:800; color:#d97706; font-size:20px; margin:0 0 6px 0; }
+.modal-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:14px; }
