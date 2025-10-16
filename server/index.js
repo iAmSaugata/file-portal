@@ -131,12 +131,16 @@ app.post('/api/getlink', requireAuth, (req,res)=>{
 });
 
 app.get('/d/:token', (req,res)=>{
-  const token = req.params.token; const row = getLink.get(token);
+  const token = req.params.token;
+  const row = getLink.get(token);
   if (!row) return res.status(404).send('Invalid link');
   const age = Date.now() - new Date(row.created_at).getTime();
   if (age > LINK_TTL_MS) return res.status(410).send('Link expired');
-  res.render('download',{ fileName: row.original_name, token });
+
+  // ⬇️ pass fileSize so view can show “MB/KB below filename”
+  res.render('download', { fileName: row.original_name, token, fileSize: row.size });
 });
+
 app.get('/dl/:token', downloadLimiter, (req,res)=>{
   const token = req.params.token; const row = getLink.get(token);
   if (!row) return res.status(404).send('Invalid link');

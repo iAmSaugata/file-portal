@@ -9,12 +9,16 @@
   <% if (brandPrimary) { %><style>:root{ --primary:<%= brandPrimary %>; }</style><% } %>
   <style>
     .inline-actions{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
-    .code-grid{ display:grid; gap:12px; grid-template-columns: 1fr 1fr; margin-top:12px; }
-    @media (max-width: 760px){ .code-grid{ grid-template-columns: 1fr; } }
+    /* stack boxes vertically and keep them inside the card */
+    .code-col{ display:flex; flex-direction:column; gap:12px; margin-top:12px; }
     .code-card{ background:#f8fbff; border:1px solid #e5e7eb; border-radius:12px; padding:10px; text-align:left; }
     .code-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; font-weight:700; }
-    pre{ margin:0; overflow:auto; }
-    code{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 13px; }
+
+    /* fit inside card; prefer vertical scrolling for long commands */
+    pre{ margin:0; max-height:140px; overflow-y:auto; }
+    code{ white-space: pre-wrap; word-break: break-all; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 13px; }
+
+    .file-meta{ color:#6b7280; font-size: 13px; margin-top:4px; }
   </style>
 </head>
 <body>
@@ -22,21 +26,24 @@
     <div class="card" style="max-width: 720px; text-align:center;">
       <h2 style="margin-top:0">File Ready</h2>
       <div class="panel">
-        <div style="margin-bottom:10px"><strong><%= fileName %></strong></div>
+        <div style="margin-bottom:6px"><strong><%= fileName %></strong></div>
+        <div class="file-meta" id="filesize"></div>
 
-        <div class="inline-actions" style="margin-bottom:10px">
-          <a class="btn btn-primary" href="/dl/<%= token %>">Download</a>
+        <!-- Only Share + Close -->
+        <div class="inline-actions" style="margin:10px 0 8px">
           <button class="btn btn-blue" id="btnShare" type="button">Share</button>
           <button class="btn btn-muted" id="btnClose" type="button">Close</button>
         </div>
 
-        <div class="code-grid">
+        <!-- One box per row (Windows, Linux), vertically stacked -->
+        <div class="code-col">
           <div class="code-card">
             <div class="code-head">Windows
               <button class="btn btn-muted small" id="copyWin" type="button">Copy</button>
             </div>
             <pre><code id="cmdWin"></code></pre>
           </div>
+
           <div class="code-card">
             <div class="code-head">Linux
               <button class="btn btn-muted small" id="copyNix" type="button">Copy</button>
@@ -60,28 +67,42 @@ function toast(msg, type='info', ms=7000){
 }
 
 const fileName = <%- JSON.stringify(fileName) %>;
+const fileSize = Number(<%- JSON.stringify(typeof fileSize === 'number' ? fileSize : 0) %>);
 const dlUrl = location.origin + "/dl/<%= token %>";
 
-const cmdWin = 'Invoke-WebRequest -Uri ' + JSON.stringify(dlUrl) + ' -OutFile ' + JSON.stringify('.\\' + fileName);
+// Show size just under filename (MB if > 500 KB else KB)
+(function(){
+  const kb = Math.round(fileSize/1024);
+  const txt = kb > 500 ? (fileSize/1048576).toFixed(2) + ' MB' : kb + ' KB';
+  document.getElementById('filesize').textContent = txt;
+})();
+
+// Build commands
+const cmdWin = 'Invoke-WebRequest -Uri ' + JSON.stringify(dlUrl) + ' -OutFile ' + JSON.stringify('.\\\\' + fileName);
 const cmdNix = 'wget -O ' + JSON.stringify(fileName) + ' ' + JSON.stringify(dlUrl);
+
+// Put in DOM
 document.getElementById('cmdWin').textContent = cmdWin;
 document.getElementById('cmdNix').textContent = cmdNix;
 
+// Copy buttons
 document.getElementById('copyWin').onclick = ()=> navigator.clipboard.writeText(cmdWin).then(()=>toast('Windows command copied', 'ok', 7000));
 document.getElementById('copyNix').onclick = ()=> navigator.clipboard.writeText(cmdNix).then(()=>toast('Linux command copied', 'ok', 7000));
 
+// Share (Web Share API) with fallback to copy
 document.getElementById('btnShare').onclick = async ()=>{
   if (navigator.share){
     try{
       await navigator.share({ title: fileName, text: fileName, url: dlUrl });
       toast('Share sheet opened', 'info', 6000);
-    }catch(e){ /* canceled */ }
+    }catch(e){ /* user canceled */ }
   } else {
     await navigator.clipboard.writeText(dlUrl);
     toast('Link copied (share not supported)', 'ok', 7000);
   }
 };
 
+// Close
 document.getElementById('btnClose').onclick = ()=>{
   window.close();
   setTimeout(()=>{
