@@ -83,7 +83,7 @@ Built for reverse proxies (Cloudflare), supports tokenized download links, paral
 
 Use this **Docker-only** command to generate a bcrypt hash for your password (no Node project needed):
 ```bash
-docker run --rm -e PASS='YOUR-PASSWORD' -e COST=10 node:20-alpine sh -lc '
+docker run --rm -e PASS='YOUR-PASSWORD-HERE' -e COST=10 node:20-alpine sh -lc '
   npm -g i bcryptjs >/dev/null 2>&1 &&
   export NODE_PATH=$(npm root -g) &&
   node -e "require(\"module\").Module._initPaths();const b=require(\"bcryptjs\");const h=b.hashSync(process.env.PASS,Number(process.env.COST)||10);console.log(h)"
