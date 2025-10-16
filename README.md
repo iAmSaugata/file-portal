@@ -125,7 +125,7 @@ services:
       PORT: 8080
       SESSION_SECRET: "change-me-please"
       AUTH_BCRYPT_HASH: "$$2a$$10$$1GQDDcqXtI7DmiPjJSUgXeLXDSNovtlKA6OMSppfU.lbfVODVmopC"
-      MAX_UPLOAD_MB: 200
+      MAX_UPLOAD_MB: 100
       BASE_URL: "https://files.example.com"
       BRAND_TITLE: "File Management"
       FOOTER_TEXT: "Powered by Cloudflare DNS API • © iAmSaugata"
