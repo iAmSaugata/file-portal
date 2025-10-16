@@ -62,7 +62,7 @@
 <body>
   <div class="container">
     <div class="card" style="max-width: 720px; text-align:center;">
-      <h2 style="margin-top:0">File Ready</h2>
+      <h2 style="margin-top:0">File Is Ready To Download</h2>
       <div class="panel">
         <div style="margin-bottom:6px"><strong><%= fileName %></strong></div>
         <div class="file-meta" id="filesize"></div>
@@ -118,7 +118,8 @@ const dlUrl = location.origin + "/dl/<%= token %>";
 })();
 
 // Build commands
-const cmdWin = 'Invoke-WebRequest -Uri ' + JSON.stringify(dlUrl) + ' -OutFile ' + JSON.stringify('.\\\\' + fileName);
+const safeName = fileName.replace(/"/g, '\\"'); // escape any quotes in the name
+const cmdWin = `Invoke-WebRequest -Uri ${JSON.stringify(dlUrl)} -OutFile ".\\${safeName}"`;
 const cmdNix = 'wget -O ' + JSON.stringify(fileName) + ' ' + JSON.stringify(dlUrl);
 
 // Put in DOM
