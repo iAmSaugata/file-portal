@@ -75,8 +75,7 @@
   </div>
 
 <script>
-/* Toasts */
-function toast(msg, type='info', ms=3200){
+function toast(msg, type='info', ms=8000){
   let wrap = document.querySelector('.toast-wrap');
   if(!wrap){ wrap=document.createElement('div'); wrap.className='toast-wrap'; document.body.appendChild(wrap); }
   const t=document.createElement('div'); t.className='toast '+(type==='ok'?'ok':type==='err'?'err':'info'); t.textContent=msg;
@@ -85,13 +84,11 @@ function toast(msg, type='info', ms=3200){
   setTimeout(()=>{ try{ wrap.removeChild(t); }catch{} }, ms);
 }
 
-// Bind Done explicitly
 document.addEventListener('DOMContentLoaded', ()=>{
   const done = document.getElementById('btnDone');
   if (done){ done.addEventListener('click', ()=>{ window.location.assign('/dashboard'); }); }
 });
 
-// Worker for SHA-256
 const workerCode = () => {
   self.onmessage = async (e)=>{
     const file = e.data;
@@ -114,7 +111,7 @@ const btnCancel = document.getElementById('btnCancel');
 const queue = document.getElementById('queue');
 const commentsEl = document.getElementById('comments');
 
-let q = []; // {file, el, lastT, lastLoaded, xhr, fileId, hash}
+let q = [];
 let uploading = false;
 const uploadedNames = new Set();
 const uploadedHashes = new Set();
@@ -159,7 +156,7 @@ async function addFiles(files){
 btnCancel.onclick = ()=>{
   if (!uploading) return;
   const cur = q.find(x=>x.xhr);
-  if (cur && cur.xhr){ cur.xhr.abort(); toast('Upload canceled','err', 5200); }
+  if (cur && cur.xhr){ cur.xhr.abort(); toast('Upload canceled','err', 8000); }
 };
 
 async function startUploads(){
@@ -202,12 +199,14 @@ async function startUploads(){
                 copyBtn.onclick = async ()=>{
                   const r = await fetch('/api/getlink',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id })});
                   const g = await r.json();
-                  if (g.ok){ await navigator.clipboard.writeText(g.directUrl); toast('Download Link Copied for ' + item.file.name, 'ok'); }
+                  if (g.ok){ await navigator.clipboard.writeText(g.directUrl); toast('Download Link Copied for ' + item.file.name, 'ok', 8000); }
                 };
               }
-            }catch{ toast('Failed','err', 5200); }
+            }catch{ toast('Failed','err', 8000); }
           } else {
-            spd.textContent = 'failed'; toast('Upload failed','err', 5200);
+            spd.textContent = 'failed'; let msg = 'Upload failed';
+            try { const err = JSON.parse(xhr.responseText); if (err && err.error) msg = 'Upload failed: ' + err.error; } catch {}
+            toast(msg,'err', 8000);
           }
           resolve(true);
         }

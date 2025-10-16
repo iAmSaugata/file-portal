@@ -30,7 +30,7 @@
     </div>
   </div>
 <script>
-function toast(msg, type='info', ms=3200){
+function toast(msg, type='info', ms=7000){
   let wrap = document.querySelector('.toast-wrap');
   if(!wrap){ wrap=document.createElement('div'); wrap.className='toast-wrap'; document.body.appendChild(wrap); }
   const t=document.createElement('div'); t.className='toast '+(type==='ok'?'ok':type==='err'?'err':'info'); t.textContent=msg;
@@ -40,8 +40,8 @@ function toast(msg, type='info', ms=3200){
 }
 const url = location.origin + "/dl/<%= token %>";
 document.getElementById('u').innerText = url;
-function copyDirect(){ navigator.clipboard.writeText(url).then(()=>toast('Download Link Copied for ' + <%- JSON.stringify(fileName) %>, 'ok')); }
-function copyWget(){ const t = 'wget -O "' + <%- JSON.stringify(fileName) %> + '" ' + url; navigator.clipboard.writeText(t).then(()=>toast('Copied wget for ' + <%- JSON.stringify(fileName) %>, 'ok')); }
+function copyDirect(){ navigator.clipboard.writeText(url).then(()=>toast('Download Link Copied for ' + <%- JSON.stringify(fileName) %>, 'ok', 7000)); }
+function copyWget(){ const t = 'wget -O "' + <%- JSON.stringify(fileName) %> + '" ' + url; navigator.clipboard.writeText(t).then(()=>toast('Copied wget for ' + <%- JSON.stringify(fileName) %>, 'ok', 7000)); }
 </script>
 </body>
 </html>

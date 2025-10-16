@@ -62,7 +62,13 @@
                   </div>
                   <div class="small" style="color:#6b7280"><%= new Date(f.uploaded_at).toLocaleString() %></div>
                 </td>
-                <td><%= (Math.round(f.size/1024)) %> KB</td>
+                <td>
+                  <% if (f.size > 500*1024) { %>
+                    <%= (f.size/1024/1024).toFixed(1) %> MB
+                  <% } else { %>
+                    <%= Math.round(f.size/1024) %> KB
+                  <% } %>
+                </td>
                 <td style="text-align:center">
                   <div class="actions">
                     <button class="btn btn-primary" data-action="getlink" data-id="<%= f.id %>">GetLink</button>

@@ -1,5 +1,5 @@
 // Toast helpers (with duration)
-function toast(msg, type='info', ms=3200){
+function toast(msg, type='info', ms=7000){
   let wrap = document.querySelector('.toast-wrap');
   if(!wrap){ wrap=document.createElement('div'); wrap.className='toast-wrap'; document.body.appendChild(wrap); }
   const t=document.createElement('div'); t.className='toast '+(type==='ok'?'ok':type==='err'?'err':'info'); t.textContent=msg;
@@ -58,10 +58,10 @@ async function bulkDelete(){
         const r = await fetch('/api/delete', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ids }) });
         const j = await r.json();
         if (j.ok){
-          names.forEach(n=>toast(`${n} Delete Successfully`, 'err', 5200));
+          names.forEach(n=>toast(`${n} Delete Successfully`, 'err', 8000));
           location.reload();
-        } else { toast(j.error || 'Failed', 'err', 5200); }
-      }catch(e){ toast('Network error', 'err', 5200); }
+        } else { toast(j.error || 'Failed', 'err', 8000); }
+      }catch(e){ toast('Network error', 'err', 8000); }
     }
   });
 }
@@ -86,8 +86,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
           const j = await r.json();
           if (!j.ok){ toast(j.error || 'Failed', 'err'); return; }
           await navigator.clipboard.writeText(j.directUrl);
-          toast(`Download Link Copied for ${fname}`, 'ok');
-        }catch(e){ toast('Network error', 'err'); }
+          toast(`Download Link Copied for ${fname}`, 'ok', 7000);
+        }catch(e){ toast('Network error', 'err', 8000); }
       } else if (btn.dataset.action === 'delete'){
         modalConfirm({
           title: 'Delete File',
@@ -97,8 +97,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
             try{
               const r = await fetch('/api/delete', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ids: [id] }) });
               const j = await r.json();
-              if (j.ok){ toast(`${fname} Delete Successfully`, 'err', 5200); location.reload(); } else { toast('Failed', 'err', 5200); }
-            }catch(e){ toast('Network error', 'err', 5200); }
+              if (j.ok){ toast(`${fname} Delete Successfully`, 'err', 8000); location.reload(); } else { toast('Failed', 'err', 8000); }
+            }catch(e){ toast('Network error', 'err', 8000); }
           }
         });
       }

@@ -27,6 +27,14 @@ const AUTH_BCRYPT_HASH = process.env.AUTH_BCRYPT_HASH || '';
 const MAX_UPLOAD_MB = parseInt(process.env.MAX_UPLOAD_MB || '200', 10);
 const BASE_URL = (process.env.BASE_URL || '').trim();
 
+// ---- Trust proxy (Cloudflare-only default) ----
+const TRUST_PROXY = process.env.TRUST_PROXY ?? '1';
+const parsedTrust = TRUST_PROXY === 'true' ? true
+                 : TRUST_PROXY === 'false' ? false
+                 : Number.isFinite(parseInt(TRUST_PROXY, 10)) ? parseInt(TRUST_PROXY, 10)
+                 : TRUST_PROXY;
+app.set('trust proxy', parsedTrust);
+
 const nanoId = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', 21);
 
 // CSP allows inline scripts + worker blobs
@@ -42,7 +50,16 @@ app.use(helmet({
     }
   }
 }));
-app.use(morgan('combined'));
+
+// ---- Morgan: prefer Cloudflare client IP ----
+morgan.token('remote-addr', (req) => {
+  const ip = req.headers['cf-connecting-ip'] || req.ip || '';
+  return String(ip).replace(/^::ffff:/, '');
+});
+morgan.token('cf-ray', (req) => req.headers['cf-ray'] || '-');
+morgan.token('cf-country', (req) => req.headers['cf-ipcountry'] || '-');
+app.use(morgan(':remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent" (cf-ray=:cf-ray country=:cf-country)'));
+
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser(SESSION_SECRET));
@@ -106,7 +123,7 @@ app.post('/api/getlink', requireAuth, (req,res)=>{
   const id = parseInt(req.body.id, 10);
   const row = getFileById.get(id);
   if (!row) return res.status(404).json({ ok:false, error:'File not found' });
-  const token = nanoId();
+  const token = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', 21)();
   createLink.run({ file_id:id, token, created_at:new Date().toISOString() });
   const origin = BASE_URL || `${req.protocol}://${req.get('host')}`;
   res.json({ ok:true, pageUrl:`${origin}/d/${token}`, directUrl:`${origin}/dl/${token}` });
@@ -119,7 +136,7 @@ app.get('/d/:token', (req,res)=>{
   if (age > LINK_TTL_MS) return res.status(410).send('Link expired');
   res.render('download',{ fileName: row.original_name, token });
 });
-app.get('/dl/:token', downloadLimiter, (req,res)=>{
+app.get('/dl/:token', (req,res)=>{
   const token = req.params.token; const row = getLink.get(token);
   if (!row) return res.status(404).send('Invalid link');
   const age = Date.now() - new Date(row.created_at).getTime();
