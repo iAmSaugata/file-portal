@@ -118,7 +118,7 @@ const dlUrl = location.origin + "/dl/<%= token %>";
 })();
 
 // Build commands
-const cmdWin = 'Invoke-WebRequest -Uri ' + JSON.stringify(dlUrl) + ' -OutFile ' + JSON.stringify('.\' + fileName);
+const cmdWin = 'Invoke-WebRequest -Uri ' + JSON.stringify(dlUrl) + ' -OutFile ' + JSON.stringify('.\\\\' + fileName);
 const cmdNix = 'wget -O ' + JSON.stringify(fileName) + ' ' + JSON.stringify(dlUrl);
 
 // Put in DOM
