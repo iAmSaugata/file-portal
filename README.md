@@ -187,7 +187,7 @@ Back up both for disaster recovery.
 
 ---
 
-## 🗓️ Link Expiry & Security
+## 🗓️ Link Expiry
 
 - `/dl/:token` links expire after `LINK_TTL_MS` (default 24h).  
 - Tokens are random NanoID; file paths aren’t exposed.
