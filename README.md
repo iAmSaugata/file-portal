@@ -1,13 +1,10 @@
-# File Management Portal — v10
+# File Management Portal — v10.1
 
-Includes everything from v9 plus:
-- File size on dashboard: **MB if > 500KB**, otherwise in KB.
-- **Parallel uploads** with env var **UPLOAD_CONCURRENCY** (default 3).
-- **Done** button is disabled while uploads are active; re-enabled when all complete/canceled.
-- **Cancel** aborts *all* in-flight uploads and clears the queue.
-- Express **trust proxy** + Morgan override to log **Cloudflare client IP** (`CF-Connecting-IP`).
+What's new vs v10
+- **GetLink** (dashboard) now opens the **download page** (`/d/:token`) that renders `server/views/download.ejs`.
+- All v10 features retained: parallel uploads, longer toasts, Cloudflare IP logging, etc.
 
-## Env
+## Env (same as before)
 ```
 SESSION_SECRET=change-me-please
 AUTH_BCRYPT_HASH= # bcrypt hash of your password
@@ -19,14 +16,13 @@ RATE_LIMIT_WINDOW_MS=900000
 RATE_LIMIT_MAX=200
 DOWNLOAD_RATE_LIMIT_MAX=60
 LINK_TTL_MS=86400000
-TRUST_PROXY=1            # Cloudflare only; increase if you add more proxies
-UPLOAD_CONCURRENCY=3     # number of parallel uploads on the client
+TRUST_PROXY=1
+UPLOAD_CONCURRENCY=3
 ```
 
 ## Run
 ```bash
-unzip file-portal-v10.zip
-cd file-portal-v10
+unzip file-portal-v10.1.zip
+cd file-portal-v10.1
 docker compose up -d --build
-# open http://<host>:9876
 ```

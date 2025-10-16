@@ -1,6 +1,6 @@
 {
   "name": "file-portal",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "Self-hosted, secure, modern file upload & management portal",
   "main": "index.js",
   "type": "module",

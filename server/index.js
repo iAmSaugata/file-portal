@@ -28,7 +28,7 @@ const MAX_UPLOAD_MB = parseInt(process.env.MAX_UPLOAD_MB || '200', 10);
 const BASE_URL = (process.env.BASE_URL || '').trim();
 const UPLOAD_CONCURRENCY = parseInt(process.env.UPLOAD_CONCURRENCY || '3', 10);
 
-// Trust Cloudflare (or first proxy hop) by default, or use env-provided value
+// Trust Cloudflare hop by default
 const TRUST_PROXY = process.env.TRUST_PROXY ?? '1';
 const parsed = TRUST_PROXY === 'true' ? true
              : TRUST_PROXY === 'false' ? false
@@ -38,7 +38,7 @@ app.set('trust proxy', parsed);
 
 const nanoId = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', 21);
 
-// CSP allows inline scripts + worker blobs
+// Helmet CSP
 app.use(helmet({
   contentSecurityPolicy: {
     useDefaults: true,
@@ -52,7 +52,7 @@ app.use(helmet({
   }
 }));
 
-// Morgan: prefer Cloudflare client IP
+// Morgan prefer Cloudflare
 morgan.token('remote-addr', (req) => {
   const ip = req.headers['cf-connecting-ip'] || req.ip || '';
   return String(ip).replace(/^::ffff:/, '');
@@ -124,7 +124,7 @@ app.post('/api/getlink', requireAuth, (req,res)=>{
   const id = parseInt(req.body.id, 10);
   const row = getFileById.get(id);
   if (!row) return res.status(404).json({ ok:false, error:'File not found' });
-  const token = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', 21)();
+  const token = nanoId();
   createLink.run({ file_id:id, token, created_at:new Date().toISOString() });
   const origin = BASE_URL || `${req.protocol}://${req.get('host')}`;
   res.json({ ok:true, pageUrl:`${origin}/d/${token}`, directUrl:`${origin}/dl/${token}` });

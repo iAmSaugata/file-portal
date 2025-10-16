@@ -95,7 +95,6 @@ const commentsEl = document.getElementById('comments');
 
 btnDone.addEventListener('click', ()=>{ if (btnDone.disabled) return; window.location.assign('/dashboard'); });
 
-// Worker for SHA-256
 const workerCode = () => {
   self.onmessage = async (e)=>{
     const file = e.data;
@@ -178,7 +177,7 @@ function startUploads(){
 }
 
 function pump(){
-  while (active.size < UPLOAD_CONCURRENCY && q.length){
+  while (active.size < Number(<%= uploadConcurrency %>) && q.length){
     const item = q.shift();
     uploadOne(item);
   }
