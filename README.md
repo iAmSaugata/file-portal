@@ -52,10 +52,6 @@ Built for reverse proxies (Cloudflare), supports tokenized download links, paral
 | `AUTH_BCRYPT_HASH` | _(empty)_ | Bcrypt hash of your admin password (see **Hash Generation**). If empty, login is disabled. |
 | `MAX_UPLOAD_MB` | `100` | Per-file upload size cap. |
 | `BASE_URL` | _(auto from request)_ | Public base URL (e.g., `https://files.example.com`). Needed behind proxies so links point to the correct origin. |
-| `BRAND_TITLE` | `File Management` | Header title. |
-| `BRAND_LOGO_URL` | _(empty)_ | Optional logo URL for header. |
-| `BRAND_PRIMARY_COLOR` | _(empty)_ | Optional HEX for primary color. |
-| `FOOTER_TEXT` | `Powered by ChatGPT • © iAmSaugata` | Footer branding text (you may set the Cloudflare variant). |
 | `RATE_LIMIT_WINDOW_MS` | `900000` | Rate limit window (ms). |
 | `RATE_LIMIT_MAX` | `200` | Max requests per window for `/api/*`. |
 | `DOWNLOAD_RATE_LIMIT_MAX` | `60` | Max requests per window for `/dl/*`. |
@@ -210,14 +206,6 @@ Back up both for disaster recovery.
 
 - `/dl/:token` links expire after `LINK_TTL_MS` (default 24h).  
 - Tokens are random NanoID; file paths aren’t exposed.
-
----
-
-## 🏷️ Branding
-
-- Header title & logo: `BRAND_TITLE`, `BRAND_LOGO_URL`  
-- Primary accent: `BRAND_PRIMARY_COLOR`  
-- Footer: `FOOTER_TEXT` (e.g., **Powered by Cloudflare DNS API • © iAmSaugata**)
 
 ---
 
