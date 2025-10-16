@@ -67,11 +67,12 @@
         <div style="margin-bottom:6px"><strong><%= fileName %></strong></div>
         <div class="file-meta" id="filesize"></div>
 
-        <!-- Only Share + Close -->
-        <div class="inline-actions" style="margin:10px 0 8px">
-          <button class="btn btn-blue" id="btnShare" type="button">Share</button>
-          <button class="btn btn-muted" id="btnClose" type="button">Close</button>
-        </div>
+        <!-- Only Copy + Share + Close -->
+		<div clss="inline-actions" style="margin:10px 0 8px">
+		  <button class="btn btn-blue" id="btnCopy"  type="button">Copy</button>
+		  <button class="btn btn-blue" id="btnShare" type="button">Share</button>
+		  <button class="btn btn-muted" id="btnClose" type="button">Close</button>
+		</div>
 
         <!-- One box per row (Windows, Linux), vertically stacked -->
 		<div class="code-col">
@@ -129,6 +130,16 @@ document.getElementById('cmdNix').textContent = cmdNix;
 // Copy buttons
 document.getElementById('copyWin').onclick = ()=> navigator.clipboard.writeText(cmdWin).then(()=>toast('Windows Command Copied', 'ok', 8000));
 document.getElementById('copyNix').onclick = ()=> navigator.clipboard.writeText(cmdNix).then(()=>toast('Linux Command Copied', 'ok', 8000));
+
+// Copy direct link
+document.getElementById('btnCopy').onclick = async () => {
+  try {
+    await navigator.clipboard.writeText(dlUrl);
+    toast(`Download Link Copied for ${fileName}`, 'ok', 7000);
+  } catch {
+    toast('Failed to copy link', 'err', 7000);
+  }
+};
 
 // Share (Web Share API) with fallback to copy
 document.getElementById('btnShare').onclick = async ()=>{
