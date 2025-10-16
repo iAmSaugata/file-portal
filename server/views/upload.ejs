@@ -1,78 +1,22 @@
 <!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Upload • <%= brandTitle %></title>
-  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml"/>
-  <link rel="stylesheet" href="/static/styles.css"/>
-  <% if (brandPrimary) { %><style>:root{ --primary:<%= brandPrimary %>; }</style><% } %>
-  <style>
-    .upload-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:18px; }
-    @media (max-width: 860px){ .upload-grid{ grid-template-columns: 1fr; } }
-    .queue-item{ background:#fff; border:1px solid #eef0f5; border-radius:12px; padding:10px 12px; margin:10px 0; }
-    .queue-h{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
-    .queue-name{ font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width: 260px; }
-    .queue-meta{ font-size:12px; color:#6b7280; }
-    .q-actions{ display:flex; gap:8px; }
-    .x{ cursor:pointer; color:#b91c1c; }
-    .bar{ height:10px; background:#e5e7eb; border-radius:8px; overflow:hidden; margin-top:8px; }
-    .bar > div{ height:100%; width:0%; background: linear-gradient(90deg,#60a5fa,#93c5fd); transition: width 0.1s linear; }
-    .two-btns{ display:flex; gap:10px; }
-    .ghost{ opacity:.5; pointer-events:none; }
-  </style>
-</head>
-<body>
-  <div class="topbar">
-    <div class="topbar-inner">
-      <div class="topbar-title">
-        <% if (brandLogo) { %><img src="<%= brandLogo %>" alt="logo"/><% } %>
-        <span><%= brandTitle %></span>
-      </div>
-      <div>
-        <a href="/logout"><button class="btn btn-signout small-compact">Sign Out</button></a>
-      </div>
-    </div>
+<html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Upload • <%= brandTitle %></title>
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="/static/styles.css"/>
+</head><body>
+<div class="topbar"><div class="topbar-inner"><div class="topbar-title"><% if (brandLogo) { %><img src="<%= brandLogo %>" alt="logo"/><% } %><span><%= brandTitle %></span></div><div><a href="/logout"><button class="btn btn-signout small-compact">Sign Out</button></a></div></div></div>
+<div class="container"><div class="card" style="max-width: 980px; position: relative;">
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px">
+    <h2 style="margin:0">Upload Files</h2>
+    <button id="btnDone" class="btn btn-primary" type="button">Done</button>
   </div>
-
-  <div class="container">
-    <div class="card" style="max-width: 980px; position: relative;">
-      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px">
-        <h2 style="margin:0">Upload Files</h2>
-        <button id="btnDone" class="btn btn-primary" type="button">Done</button>
-      </div>
-
-      <div class="upload-grid">
-        <div class="panel">
-          <h3 style="margin-top:0">File Upload</h3>
-          <div id="zone" class="dropzone" style="margin-top:8px">
-            <p style="margin:0 0 4px 0">Drag and Drop Files</p>
-            <p class="small" style="margin:0">Or</p>
-            <div style="margin-top:8px">
-              <button id="btnBrowse" class="btn btn-blue" type="button">Browse</button>
-              <input id="picker" type="file" multiple style="display:none"/>
-            </div>
-          </div>
-          <div style="margin-top:12px">
-            <label class="small" for="comments">Comments (optional)</label>
-            <textarea id="comments" placeholder="Optional comments" style="width:100%; min-height:80px; padding:10px; border:1px solid #d1d5db; border-radius:10px"></textarea>
-          </div>
-        </div>
-
-        <div class="panel">
-          <h3 style="margin-top:0">Uploading</h3>
-          <div id="queue"></div>
-          <div class="two-btns" style="margin-top:10px">
-            <button id="btnStart" class="btn btn-primary" style="display:none">Upload</button>
-            <button id="btnCancel" class="btn btn-muted" disabled>Cancel</button>
-          </div>
-          <div id="hint" class="small" style="margin-top:8px; color:#6b7280">Uploads begin as soon as you add files.</div>
-        </div>
-      </div>
-
-      <div class="footer"><b><%= footerText %></b></div>
-    </div>
-  </div>
+  <div class="panel"><div id="zone" class="dropzone" style="margin-top:8px">
+    <p style="margin:0 0 4px 0">Drag and Drop Files</p><p class="small" style="margin:0">Or</p>
+    <div style="margin-top:8px"><button id="btnBrowse" class="btn btn-blue" type="button">Browse</button><input id="picker" type="file" multiple style="display:none"/></div>
+  </div><div style="margin-top:12px"><label class="small" for="comments">Comments (optional)</label><textarea id="comments" placeholder="Optional comments" style="width:100%; min-height:80px; padding:10px; border:1px solid #d1d5db; border-radius:10px"></textarea></div></div>
+  <div class="panel"><h3 style="margin-top:0">Uploading</h3><div id="queue"></div><div class="two-btns" style="margin-top:10px"><button id="btnStart" class="btn btn-primary" style="display:none">Upload</button><button id="btnCancel" class="btn btn-muted" disabled>Cancel</button></div><div id="hint" class="small" style="margin-top:8px; color:#6b7280">Uploads begin as soon as you add files.</div></div>
+  <div class="footer"><b><%= footerText %></b></div>
+</div></div>
 
 <script>
 function toast(msg, type='info', ms=8000){
@@ -83,27 +27,12 @@ function toast(msg, type='info', ms=8000){
   setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateY(-4px)'; }, Math.max(2600, ms-600));
   setTimeout(()=>{ try{ wrap.removeChild(t); }catch{} }, ms);
 }
-
 document.addEventListener('DOMContentLoaded', ()=>{
   const done = document.getElementById('btnDone');
-  if (done){ done.addEventListener('click', ()=>{ window.location.assign('/dashboard'); }); }
+  if (done){ done.addEventListener('click', ()=>{ if(!done.disabled) window.location.assign('/dashboard'); }); }
 });
 
-const workerCode = () => {
-  self.onmessage = async (e)=>{
-    const file = e.data;
-    try{
-      const buf = await file.arrayBuffer();
-      const hashBuf = await crypto.subtle.digest('SHA-256', buf);
-      const hashArr = Array.from(new Uint8Array(hashBuf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-      self.postMessage({ok:true, hash: hashArr});
-    }catch(err){ self.postMessage({ok:false}); }
-  };
-};
-const workerBlob = new Blob([ '(' + workerCode.toString() + ')()' ], { type: 'application/javascript' });
-const hasher = new Worker(URL.createObjectURL(workerBlob));
-function hashFile(file){ return new Promise(res=>{ const onm = (ev)=>{ res(ev.data.ok ? ev.data.hash : null); hasher.removeEventListener('message', onm); }; hasher.addEventListener('message', onm); hasher.postMessage(file); }); }
-
+const MAX_PAR = Number(<%- JSON.stringify(parallelUploads || 2) %>);
 const zone = document.getElementById('zone');
 const picker = document.getElementById('picker');
 const btnBrowse = document.getElementById('btnBrowse');
@@ -113,39 +42,33 @@ const commentsEl = document.getElementById('comments');
 
 let q = [];
 let uploading = false;
+
 const uploadedNames = new Set();
 const uploadedHashes = new Set();
 
 btnBrowse.onclick = () => picker.click();
 picker.onchange = () => addFiles(Array.from(picker.files));
-
 zone.ondragover = (e)=>{ e.preventDefault(); zone.style.filter='brightness(1.05)'; };
 zone.ondragleave = ()=>{ zone.style.filter=''; };
 zone.ondrop = (e)=>{ e.preventDefault(); zone.style.filter=''; addFiles(Array.from(e.dataTransfer.files)); };
 
 function human(n){ const u=['B','KB','MB','GB','TB']; let i=0,v=n; while(v>=1024 && i<u.length-1){ v/=1024; i++; } return (Math.round(v*10)/10)+' '+u[i]; }
 
+async function hashFile(file){
+  const buf = await file.arrayBuffer();
+  const hashBuf = await crypto.subtle.digest('SHA-256', buf);
+  const hashArr = Array.from(new Uint8Array(hashBuf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  return hashArr;
+}
+
 async function addFiles(files){
   for (const file of files){
     if (uploadedNames.has(file.name)) { toast('Skipped (already uploaded by name): ' + file.name, 'info'); continue; }
     const h = await hashFile(file);
     if (h && uploadedHashes.has(h)) { toast('Skipped (already uploaded by content): ' + file.name, 'info'); continue; }
-
     const row = document.createElement('div');
     row.className='queue-item';
-    row.innerHTML = `
-      <div class="queue-h">
-        <div class="queue-name" title="${file.name}">${file.name}</div>
-        <div class="q-actions">
-          <span class="queue-meta">${human(file.size)}</span>
-          <span class="x" title="Remove from queue">×</span>
-        </div>
-      </div>
-      <div class="bar"><div></div></div>
-      <div class="queue-meta"><span class="pct">0%</span> • <span class="spd">0 KB/s</span></div>
-      <div class="q-links" style="margin-top:6px; display:none; gap:6px">
-        <button class="btn btn-muted small copylink">Copy Link</button>
-      </div>`;
+    row.innerHTML = `<div class="queue-h"><div class="queue-name" title="${file.name}">${file.name}</div><div class="q-actions"><span class="queue-meta">${human(file.size)}</span><span class="x" title="Remove from queue">×</span></div></div><div class="bar"><div></div></div><div class="queue-meta"><span class="pct">0%</span> • <span class="spd">0 KB/s</span></div><div class="q-links" style="margin-top:6px; display:none; gap:6px"><button class="btn btn-muted small copylink">Copy Link</button></div>`;
     const obj = { file, el: row, lastT: Date.now(), lastLoaded:0, xhr:null, fileId:null, hash:h };
     row.querySelector('.x').onclick = ()=>{ if (uploading) return; q = q.filter(e => e !== obj); queue.removeChild(row); };
     queue.appendChild(row); q.push(obj);
@@ -155,15 +78,35 @@ async function addFiles(files){
 
 btnCancel.onclick = ()=>{
   if (!uploading) return;
-  const cur = q.find(x=>x.xhr);
-  if (cur && cur.xhr){ cur.xhr.abort(); toast('Upload canceled','err', 8000); }
+  // Abort any active xhrs found in queue items
+  let aborted = 0;
+  for (const it of q){ if (it.xhr){ try{ it.xhr.abort(); aborted++; }catch{} } }
+  toast('Upload canceled','err', 8000);
 };
 
+function setDisabled(d){
+  const btnDone = document.getElementById('btnDone');
+  if (btnDone) btnDone.disabled = d;
+  if (btnBrowse) btnBrowse.disabled = d;
+  if (picker) picker.disabled = d;
+  if (d) queue.classList.add('ghost'); else queue.classList.remove('ghost');
+}
+
 async function startUploads(){
-  if (uploading || !q.length) return;
-  uploading = true; setDisabled(true); btnCancel.disabled = false;
-  while (q.length){
+  if (uploading) return;
+  if (!q.length) return;
+  uploading = true;
+  setDisabled(true);
+  btnCancel.disabled = false;
+
+  const inflight = new Set();
+
+  const startOne = () => {
+    if (!q.length) return;
+    if (inflight.size >= MAX_PAR) return;
     const item = q.shift();
+    inflight.add(item);
+
     const fd = new FormData();
     fd.append('files', item.file);
     fd.append('comments', commentsEl.value || '');
@@ -184,46 +127,44 @@ async function startUploads(){
         if (dt > 0.2){ const speed = (e.loaded - item.lastLoaded) / dt; spd.textContent = human(speed) + '/s'; item.lastT = now; item.lastLoaded = e.loaded; }
       }
     };
-    await new Promise((resolve)=>{
-      xhr.onreadystatechange = async ()=>{
-        if (xhr.readyState===4){
-          item.xhr = null;
-          if (xhr.status>=200 && xhr.status<300){
-            try {
-              const j = JSON.parse(xhr.responseText);
-              if (j.ok && j.saved && j.saved.length){
-                const id = j.saved[0].id;
-                uploadedNames.add(item.file.name);
-                if (item.hash) uploadedHashes.add(item.hash);
-                links.style.display='flex';
-                copyBtn.onclick = async ()=>{
-                  const r = await fetch('/api/getlink',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id })});
-                  const g = await r.json();
-                  if (g.ok){ await navigator.clipboard.writeText(g.directUrl); toast('Download Link Copied for ' + item.file.name, 'ok', 8000); }
-                };
-              }
-            }catch{ toast('Failed','err', 8000); }
-          } else {
-            spd.textContent = 'failed'; let msg = 'Upload failed';
-            try { const err = JSON.parse(xhr.responseText); if (err && err.error) msg = 'Upload failed: ' + err.error; } catch {}
-            toast(msg,'err', 8000);
-          }
-          resolve(true);
+    xhr.onreadystatechange = async ()=>{
+      if (xhr.readyState===4){
+        item.xhr = null;
+        inflight.delete(item);
+        if (xhr.status>=200 && xhr.status<300){
+          try{
+            const j = JSON.parse(xhr.responseText);
+            if (j.ok && j.saved && j.saved.length){
+              const id = j.saved[0].id;
+              uploadedNames.add(item.file.name);
+              if (item.hash) uploadedHashes.add(item.hash);
+              links.style.display='flex';
+              copyBtn.onclick = async ()=>{
+                const r = await fetch('/api/getlink',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id })});
+                const g = await r.json();
+                if (g.ok){ await navigator.clipboard.writeText(g.directUrl); toast('Download Link Copied for ' + item.file.name, 'ok', 8000); }
+              };
+            }
+          }catch{ toast('Failed','err', 8000); }
+        } else {
+          spd.textContent = 'failed'; let msg = 'Upload failed';
+          try { const err = JSON.parse(xhr.responseText); if (err && err.error) msg = 'Upload failed: ' + err.error; } catch {}
+          toast(msg,'err', 8000);
         }
-      };
-      xhr.send(fd);
-    });
-  }
-  uploading = false; setDisabled(false); btnCancel.disabled = true;
-}
+        pump();
+      }
+    };
+    xhr.send(fd);
+  };
 
-function setDisabled(d){
-  const btnBrowse = document.getElementById('btnBrowse');
-  const picker = document.getElementById('picker');
-  if (btnBrowse) btnBrowse.disabled = d;
-  if (picker) picker.disabled = d;
-  if (d) queue.classList.add('ghost'); else queue.classList.remove('ghost');
+  function pump(){
+    while (inflight.size < MAX_PAR && q.length) startOne();
+    if (inflight.size === 0 && q.length === 0){
+      uploading = false; setDisabled(false); btnCancel.disabled = true;
+    }
+  }
+
+  pump();
 }
 </script>
-</body>
-</html>
+</body></html>

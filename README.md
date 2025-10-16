@@ -1,15 +1,18 @@
-# File Management Portal — v9
+# File Management Portal — v10.1
 
-Changes in this build:
-- Upload page **Done** button is explicitly bound to return to **/dashboard**.
-- Search field + **Clear** are on the **right** above **File Upload**.
-- Improved **favicon** (folder + cloud upload mark).
-- All v8 features retained: modals for delete, toasts per filename, centered action buttons, search by name/comments, etc.
+This version builds on v10 and adds:
+- **Parallel uploads** controlled by `PARALLEL_UPLOADS` env (default 2).
+- **Done** button is disabled while any upload is in progress and re-enabled when all finish.
 
-Deploy:
+All other behavior remains unchanged from v10.
+
+## Deploy
 ```bash
-unzip file-portal-v9.zip
-cd file-portal-v9
+unzip file-portal-v10.1.zip
+cd file-portal-v10.1
 docker compose up -d --build
-# http://<host>:9876
 ```
+
+## Environment
+- `PARALLEL_UPLOADS` — integer, max number of concurrent uploads (default 2).
+- Other envs are identical to v10.

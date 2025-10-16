@@ -18,6 +18,7 @@ services:
       - DOWNLOAD_RATE_LIMIT_MAX=${DOWNLOAD_RATE_LIMIT_MAX:-60}
       - LINK_TTL_MS=${LINK_TTL_MS:-86400000}
       - TRUST_PROXY=${TRUST_PROXY:-1}
+      - PARALLEL_UPLOADS=${PARALLEL_UPLOADS:-2}
     volumes:
       - ./data/uploads:/app/uploads
       - ./data/sqlite:/app/sqlite
