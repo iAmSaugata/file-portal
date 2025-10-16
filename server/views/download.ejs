@@ -127,8 +127,8 @@ document.getElementById('cmdWin').textContent = cmdWin;
 document.getElementById('cmdNix').textContent = cmdNix;
 
 // Copy buttons
-document.getElementById('copyWin').onclick = ()=> navigator.clipboard.writeText(cmdWin).then(()=>toast('Windows command copied', 'ok', 7000));
-document.getElementById('copyNix').onclick = ()=> navigator.clipboard.writeText(cmdNix).then(()=>toast('Linux command copied', 'ok', 7000));
+document.getElementById('copyWin').onclick = ()=> navigator.clipboard.writeText(cmdWin).then(()=>toast('Windows Command Copied', 'ok', 8000));
+document.getElementById('copyNix').onclick = ()=> navigator.clipboard.writeText(cmdNix).then(()=>toast('Linux Command Copied', 'ok', 8000));
 
 // Share (Web Share API) with fallback to copy
 document.getElementById('btnShare').onclick = async ()=>{
