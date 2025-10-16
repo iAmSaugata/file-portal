@@ -1,39 +1,207 @@
-# File Management Portal — v10.2
+# File Management Portal (Docker, Self‑Hosted)
 
-Changes
-- **Download page**: "Copy Link" → **Share** (Web Share API). Falls back to copy if not supported.
-- **Buttons in one row**: **Download**, **Share**, **Close**.
-- **Close**: closes window; if blocked, goes back or navigates to `/`.
-- **Two code boxes**: **Windows** (PowerShell `Invoke-WebRequest`) and **Linux** (`wget`), each with **Copy** button.
+Modern, secure, and **Docker‑deployable** file upload & management web portal with a clean, responsive UI.  
+Built for reverse proxies (Cloudflare), supports tokenized download links, parallel uploads, client‑side SHA‑256 duplicate prevention, and admin‑only dashboard with bcrypt authentication.
 
-Other features retained from v10/v10.1:
-- Dashboard GetLink opens the **download page** (`/d/:token`).
-- Parallel uploads (client-side), cancel/disable Done during active upload.
-- File size formatting (MB if > 500 KB else KB).
-- Cloudflare IP logging and `trust proxy` handling.
-- Link TTL via `LINK_TTL_MS` (default 24h).
+---
 
-## Env
-```
-SESSION_SECRET=change-me-please
-AUTH_BCRYPT_HASH=
-MAX_UPLOAD_MB=200
-BASE_URL=
-BRAND_TITLE=File Management
-BRAND_LOGO_URL=
-BRAND_PRIMARY_COLOR=
-FOOTER_TEXT=Powered by ChatGPT • © iAmSaugata
-RATE_LIMIT_WINDOW_MS=900000
-RATE_LIMIT_MAX=200
-DOWNLOAD_RATE_LIMIT_MAX=60
-LINK_TTL_MS=86400000
-TRUST_PROXY=1
-UPLOAD_CONCURRENCY=3
-```
+## ✨ Features
 
-## Run
+- Supports Docker-first deployment (single `docker compose up -d --build`).
+- Supports optional password authentication (single bcrypt-protected password).
+- Supports signed cookies (`httpOnly`, `sameSite=lax`) for session persistence.
+- Supports Cloudflare/proxy awareness via Express `trust proxy`.
+- Supports rate limiting for API and download endpoints (configurable caps).
+- Supports configurable public origin override with `BASE_URL`.
+- Supports drag-and-drop file uploads.
+- Supports traditional “Browse” file selection.
+- Supports immediate, auto-start uploads (no extra Upload button).
+- Supports live per-file progress bars and real-time upload speed.
+- Supports parallel uploads with configurable concurrency (`UPLOAD_CONCURRENCY`).
+- Supports canceling active uploads; disables “Done” while uploading.
+- Supports duplicate-prevention by file **name** (session memory).
+- Supports duplicate-prevention by **content** using client-side SHA-256 (Web Worker).
+- Supports optional per-upload comments.
+- Supports searching files by **name** or **comments**.
+- Supports long file names with tooltip (colored ellipsis beyond 60 chars).
+- Supports comments indicator (📜) beside file name with tooltip.
+- Supports date display under the file name (no separate Date column).
+- Supports file size formatting (MB if > 500 KB, else KB).
+- Supports bulk selection with **Remove Selected** (modal confirmation).
+- Supports per-file **Delete** (modal confirmation).
+- Supports **GetLink** to generate tokenized download links.
+- Supports opening a **download page** (`/d/:token`) for each link.
+- Supports **Copy** (direct link), **Share** (system share), and **Close** (red) on download page.
+- Supports Code blocks with **Copy** for Windows & Linux commands for download.
+- Supports direct download endpoint `/dl/:token` (encoded, not raw path; TTL-gated).
+- Supports customizable header (bold “File Management”).
+- Supports modern theming: light background, gradient panels, 3D buttons, hover effects.
+- Supports footer branding text (e.g., **Powered by ChatGPT • © iAmSaugata**).
+- Supports persistent storage: files on disk (`/uploads`), metadata in SQLite (WAL).
+- Supports structured logging with morgan (prefers `cf-connecting-ip`, shows `cf-ray` & country).
+- Supports environment-based configuration (port, secrets, limits, branding, TTLs).
+
+---
+
+## 🧩 Environment Variables
+
+| Name | Default | Description |
+|---|---|---|
+| `PORT` | `8080` | Container port the server binds to. |
+| `SESSION_SECRET` | `change-me-please` | Cookie signing secret. |
+| `AUTH_BCRYPT_HASH` | _(empty)_ | Bcrypt hash of your admin password (see **Hash Generation**). If empty, login is disabled. |
+| `MAX_UPLOAD_MB` | `200` | Per-file upload size cap. |
+| `BASE_URL` | _(auto from request)_ | Public base URL (e.g., `https://files.example.com`). Needed behind proxies so links point to the correct origin. |
+| `BRAND_TITLE` | `File Management` | Header title. |
+| `BRAND_LOGO_URL` | _(empty)_ | Optional logo URL for header. |
+| `BRAND_PRIMARY_COLOR` | _(empty)_ | Optional HEX for primary color. |
+| `FOOTER_TEXT` | `Powered by ChatGPT • © iAmSaugata` | Footer branding text (you may set the Cloudflare variant). |
+| `RATE_LIMIT_WINDOW_MS` | `900000` | Rate limit window (ms). |
+| `RATE_LIMIT_MAX` | `200` | Max requests per window for `/api/*`. |
+| `DOWNLOAD_RATE_LIMIT_MAX` | `60` | Max requests per window for `/dl/*`. |
+| `LINK_TTL_MS` | `86400000` | Link expiry (ms). |
+| `TRUST_PROXY` | `1` | Express `trust proxy` (set to `1` for Cloudflare). |
+| `UPLOAD_CONCURRENCY` | `3` | Number of parallel uploads on client. |
+
+> **File size display rule**: **MB** if > **500 KB**, else **KB**.
+
+---
+
+## 🔒 Security Notes
+
+- **Auth:** One bcrypt-protected password; keep the hash secret and rotate periodically.
+- **Cookies:** Signed, `httpOnly`, `sameSite=lax`.
+- **CSP:** Helmet with conservative defaults + allowances for inline `style`/`script` where needed, and `worker-src blob:`.
+
+---
+
+## 🔐 Hash Generation (bcrypt)
+
+Use this **Docker-only** command to generate a bcrypt hash for your password (no Node project needed):
 ```bash
-unzip file-portal-v10.2.zip
-cd file-portal-v10.2
+docker run --rm -e PASS='YOUR-PASSWORD' -e COST=10 node:20-alpine sh -lc '
+  npm -g i bcryptjs >/dev/null 2>&1 &&
+  export NODE_PATH=$(npm root -g) &&
+  node -e "require(\"module\").Module._initPaths();const b=require(\"bcryptjs\");const h=b.hashSync(process.env.PASS,Number(process.env.COST)||10);console.log(h)"
+'
+```
+
+- Put the output into `AUTH_BCRYPT_HASH`.
+- **docker-compose interpolation tip**: `$` must be escaped as `$$` in YAML. Example:
+  ```yaml
+  AUTH_BCRYPT_HASH: "$$2a$$10$$1GQDDcqXtI7DmiPjJSUgXeLXDSNovtlKA6OMSppfU.lbfVODVmopC"
+  ```
+
+---
+
+## 🚀 Quick Start (Docker Compose)
+
+```yaml
+version: "3.8"
+services:
+  file-portal:
+    build: ./server
+    container_name: file-portal
+    environment:
+      PORT: 8080
+      SESSION_SECRET: "change-me-please"
+      AUTH_BCRYPT_HASH: "$$2a$$10$$1GQDDcqXtI7DmiPjJSUgXeLXDSNovtlKA6OMSppfU.lbfVODVmopC"
+      MAX_UPLOAD_MB: 200
+      BASE_URL: "https://files.example.com"
+      BRAND_TITLE: "File Management"
+      FOOTER_TEXT: "Powered by Cloudflare DNS API • © iAmSaugata"
+      RATE_LIMIT_WINDOW_MS: 900000
+      RATE_LIMIT_MAX: 200
+      DOWNLOAD_RATE_LIMIT_MAX: 60
+      LINK_TTL_MS: 86400000   # 24 hours
+      TRUST_PROXY: 1          # Cloudflare / any reverse proxy
+      UPLOAD_CONCURRENCY: 3
+    volumes:
+      - ./data/uploads:/app/uploads
+      - ./data/sqlite:/app/sqlite
+    ports:
+      - "9876:8080"
+    restart: unless-stopped
+```
+
+```bash
 docker compose up -d --build
 ```
+
+> **Cloudflare**: Set `TRUST_PROXY=1` to allow Express & rate limiters to use `cf-connecting-ip` as the real client IP. Logs include cf-ray & country.
+
+---
+
+## 🧭 Usage & ScreenShots
+Logon
+<img width="975" height="716" alt="image" src="https://github.com/user-attachments/assets/82371212-e4ab-4e9c-821e-399fdfa815d2" />
+
+File Management
+<img width="975" height="572" alt="image" src="https://github.com/user-attachments/assets/04e41099-48a5-4a03-b355-2940b836f7f9" />
+
+Download Link
+<img width="975" height="688" alt="image" src="https://github.com/user-attachments/assets/e48c1ae9-456c-41b4-bd6b-b0e726146ea5" />
+
+File Upload
+<img width="975" height="825" alt="image" src="https://github.com/user-attachments/assets/b1c10099-db82-4942-85e3-148f2a928c2c" />
+
+<img width="975" height="1020" alt="image" src="https://github.com/user-attachments/assets/b4ac2697-acb3-4708-a620-30db23757f23" />
+
+---
+
+## 🔧 Behavior Details
+
+- **Duplicate prevention** (client):
+  - By **name** (session memory)
+  - By **content hash** (SHA‑256 via Web Worker)
+- **Toasts**: Info (blue), Success (green), Error (red)
+
+---
+
+## 🧱 Reverse Proxy / Cloudflare Notes
+
+- **trust proxy** is enabled (configurable by `TRUST_PROXY`) so `req.ip` and the rate limiter use the forwarded client IP correctly.
+- Logging uses `cf-connecting-ip`, `cf-ray`, and `cf-ipcountry` when available.
+- If you see:
+  > `ERR_ERL_UNEXPECTED_X_FORWARDED_FOR … trust proxy is false`  
+  set `TRUST_PROXY=1` (or appropriate hop count) and redeploy.
+
+---
+
+## 🗃️ Data & Volumes
+
+- **Uploads:** `./data/uploads` (bind‑mount to `/app/uploads`)
+- **DB:** `./data/sqlite/portal.db` (bind‑mount to `/app/sqlite`)
+
+Back up both for disaster recovery.
+
+---
+
+## 🆘 Troubleshooting
+
+- **Upload too large** → increase `MAX_UPLOAD_MB` (MB per file).
+- **“Done” unresponsive during upload** → by design; disabled while any task active. Cancels are supported.
+- **Windows command shows `\\`** → fixed via template literal in `download.ejs` (avoid `JSON.stringify('.\\')`).
+- **All requests from internal IP** → set `TRUST_PROXY=1` under Cloudflare; logs will show real IP from `cf-connecting-ip`.
+- **Slow link or rate limit** → adjust `RATE_LIMIT_*` values to suit your traffic.
+
+---
+
+## 🗓️ Link Expiry & Security
+
+- `/dl/:token` links expire after `LINK_TTL_MS` (default 24h).  
+- Tokens are random NanoID; file paths aren’t exposed.
+
+---
+
+## 🏷️ Branding
+
+- Header title & logo: `BRAND_TITLE`, `BRAND_LOGO_URL`  
+- Primary accent: `BRAND_PRIMARY_COLOR`  
+- Footer: `FOOTER_TEXT` (e.g., **Powered by Cloudflare DNS API • © iAmSaugata**)
+
+---
+
+## 📜 License
+
+Copyright © iAmSaugata. 
