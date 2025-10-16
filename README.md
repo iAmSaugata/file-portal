@@ -1,18 +1,32 @@
-# File Management Portal — v10.1
+# File Management Portal — v10
 
-Adds **parallel uploads** (configurable) and disables the **Done** button while any upload is in progress.
-
-## What's new vs v10
-- **Parallel uploads** with `UPLOAD_CONCURRENCY` (default 3).
-- **Done** button disabled during active uploads to prevent navigating back mid-transfer.
-- No other visual or functional changes to the Upload page.
+Includes everything from v9 plus:
+- File size on dashboard: **MB if > 500KB**, otherwise in KB.
+- **Parallel uploads** with env var **UPLOAD_CONCURRENCY** (default 3).
+- **Done** button is disabled while uploads are active; re-enabled when all complete/canceled.
+- **Cancel** aborts *all* in-flight uploads and clears the queue.
+- Express **trust proxy** + Morgan override to log **Cloudflare client IP** (`CF-Connecting-IP`).
 
 ## Env
-- `UPLOAD_CONCURRENCY=3`  # number of files to upload in parallel
+```
+SESSION_SECRET=change-me-please
+AUTH_BCRYPT_HASH= # bcrypt hash of your password
+MAX_UPLOAD_MB=200
+BASE_URL= # e.g. https://files.example.com
+BRAND_TITLE=File Management
+FOOTER_TEXT=Powered by ChatGPT • © iAmSaugata
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX=200
+DOWNLOAD_RATE_LIMIT_MAX=60
+LINK_TTL_MS=86400000
+TRUST_PROXY=1            # Cloudflare only; increase if you add more proxies
+UPLOAD_CONCURRENCY=3     # number of parallel uploads on the client
+```
 
-## Deploy
+## Run
 ```bash
-unzip file-portal-v10.1.zip
-cd file-portal-v10.1
+unzip file-portal-v10.zip
+cd file-portal-v10
 docker compose up -d --build
+# open http://<host>:9876
 ```

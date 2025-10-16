@@ -63,11 +63,9 @@
                   <div class="small" style="color:#6b7280"><%= new Date(f.uploaded_at).toLocaleString() %></div>
                 </td>
                 <td>
-                  <% if (f.size > 500*1024) { %>
-                    <%= (f.size/1024/1024).toFixed(1) %> MB
-                  <% } else { %>
-                    <%= Math.round(f.size/1024) %> KB
-                  <% } %>
+                  <% const kb = Math.round(f.size/1024);
+                     const sizeText = kb > 500 ? (f.size/1048576).toFixed(2) + ' MB' : kb + ' KB'; %>
+                  <%= sizeText %>
                 </td>
                 <td style="text-align:center">
                   <div class="actions">
