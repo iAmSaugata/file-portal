@@ -82,7 +82,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
           const r = await fetch('/api/getlink', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id }) });
           const j = await r.json();
           if (!j.ok){ toast(j.error || 'Failed', 'err', 7000); return; }
-          // Open the download landing page using download.ejs
           window.open(j.pageUrl, '_blank', 'noopener');
           toast('Opening download page for ' + fname, 'info', 6000);
         }catch(e){ toast('Network error', 'err', 7000); }

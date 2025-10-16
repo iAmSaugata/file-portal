@@ -84,7 +84,6 @@ function toast(msg, type='info', ms=7000){
   setTimeout(()=>{ try{ wrap.removeChild(t); }catch{} }, ms);
 }
 
-const UPLOAD_CONCURRENCY = Number(document.body.dataset.uplConc || 3);
 const zone = document.getElementById('zone');
 const picker = document.getElementById('picker');
 const btnBrowse = document.getElementById('btnBrowse');
@@ -115,6 +114,7 @@ let active = new Set();
 let uploading = false;
 const uploadedNames = new Set();
 const uploadedHashes = new Set();
+const CONC = Number(document.body.dataset.uplConc || 3);
 
 btnBrowse.onclick = () => picker.click();
 picker.onchange = () => addFiles(Array.from(picker.files));
@@ -177,7 +177,7 @@ function startUploads(){
 }
 
 function pump(){
-  while (active.size < Number(<%= uploadConcurrency %>) && q.length){
+  while (active.size < CONC && q.length){
     const item = q.shift();
     uploadOne(item);
   }

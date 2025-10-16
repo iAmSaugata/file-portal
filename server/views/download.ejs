@@ -7,28 +7,48 @@
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml"/>
   <link rel="stylesheet" href="/static/styles.css"/>
   <% if (brandPrimary) { %><style>:root{ --primary:<%= brandPrimary %>; }</style><% } %>
+  <style>
+    .inline-actions{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+    .code-grid{ display:grid; gap:12px; grid-template-columns: 1fr 1fr; margin-top:12px; }
+    @media (max-width: 760px){ .code-grid{ grid-template-columns: 1fr; } }
+    .code-card{ background:#f8fbff; border:1px solid #e5e7eb; border-radius:12px; padding:10px; text-align:left; }
+    .code-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; font-weight:700; }
+    pre{ margin:0; overflow:auto; }
+    code{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 13px; }
+  </style>
 </head>
 <body>
   <div class="container">
-    <div class="card" style="max-width: 520px; text-align:center;">
+    <div class="card" style="max-width: 720px; text-align:center;">
       <h2 style="margin-top:0">File Ready</h2>
       <div class="panel">
         <div style="margin-bottom:10px"><strong><%= fileName %></strong></div>
-        <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+
+        <div class="inline-actions" style="margin-bottom:10px">
           <a class="btn btn-primary" href="/dl/<%= token %>">Download</a>
-          <button class="btn btn-muted" onclick="copyDirect()">Copy Link</button>
+          <button class="btn btn-blue" id="btnShare" type="button">Share</button>
+          <button class="btn btn-muted" id="btnClose" type="button">Close</button>
         </div>
-        <div style="margin-top:10px">
-          <button class="btn btn-primary" onclick="location.href='/dashboard'">Done</button>
-        </div>
-        <div class="small" style="margin-top:10px">
-          CLI: <code id="wget">wget -O "<%= fileName %>" <span id="u"></span></code>
-          <button class="btn btn-muted small" onclick="copyWget()">copy</button>
+
+        <div class="code-grid">
+          <div class="code-card">
+            <div class="code-head">Windows
+              <button class="btn btn-muted small" id="copyWin" type="button">Copy</button>
+            </div>
+            <pre><code id="cmdWin"></code></pre>
+          </div>
+          <div class="code-card">
+            <div class="code-head">Linux
+              <button class="btn btn-muted small" id="copyNix" type="button">Copy</button>
+            </div>
+            <pre><code id="cmdNix"></code></pre>
+          </div>
         </div>
       </div>
       <div class="footer"><b><%= footerText %></b></div>
     </div>
   </div>
+
 <script>
 function toast(msg, type='info', ms=7000){
   let wrap = document.querySelector('.toast-wrap');
@@ -38,10 +58,39 @@ function toast(msg, type='info', ms=7000){
   setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateY(-4px)'; }, Math.max(2600, ms-600));
   setTimeout(()=>{ try{ wrap.removeChild(t); }catch{} }, ms);
 }
-const url = location.origin + "/dl/<%= token %>";
-document.getElementById('u').innerText = url;
-function copyDirect(){ navigator.clipboard.writeText(url).then(()=>toast('Download Link Copied for ' + <%- JSON.stringify(fileName) %>, 'ok', 7000)); }
-function copyWget(){ const t = 'wget -O "' + <%- JSON.stringify(fileName) %> + '" ' + url; navigator.clipboard.writeText(t).then(()=>toast('Copied wget for ' + <%- JSON.stringify(fileName) %>, 'ok', 7000)); }
+
+const fileName = <%- JSON.stringify(fileName) %>;
+const dlUrl = location.origin + "/dl/<%= token %>";
+
+const cmdWin = 'Invoke-WebRequest -Uri ' + JSON.stringify(dlUrl) + ' -OutFile ' + JSON.stringify('.\\' + fileName);
+const cmdNix = 'wget -O ' + JSON.stringify(fileName) + ' ' + JSON.stringify(dlUrl);
+document.getElementById('cmdWin').textContent = cmdWin;
+document.getElementById('cmdNix').textContent = cmdNix;
+
+document.getElementById('copyWin').onclick = ()=> navigator.clipboard.writeText(cmdWin).then(()=>toast('Windows command copied', 'ok', 7000));
+document.getElementById('copyNix').onclick = ()=> navigator.clipboard.writeText(cmdNix).then(()=>toast('Linux command copied', 'ok', 7000));
+
+document.getElementById('btnShare').onclick = async ()=>{
+  if (navigator.share){
+    try{
+      await navigator.share({ title: fileName, text: fileName, url: dlUrl });
+      toast('Share sheet opened', 'info', 6000);
+    }catch(e){ /* canceled */ }
+  } else {
+    await navigator.clipboard.writeText(dlUrl);
+    toast('Link copied (share not supported)', 'ok', 7000);
+  }
+};
+
+document.getElementById('btnClose').onclick = ()=>{
+  window.close();
+  setTimeout(()=>{
+    if (!window.closed){
+      if (history.length > 1) history.back();
+      else location.href = '/';
+    }
+  }, 100);
+};
 </script>
 </body>
 </html>
