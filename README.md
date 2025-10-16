@@ -90,17 +90,17 @@ docker run --rm -e PASS='YOUR-PASSWORD' -e COST=10 node:20-alpine sh -lc '
 '
 ```
 
-## 🔑 Generate Generation (Docker)
-```bash
-docker run --rm node:20-alpine node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-
-```
-
 - Put the output into `AUTH_BCRYPT_HASH`.
 - **docker-compose interpolation tip**: `$` must be escaped as `$$` in YAML. Example:
   ```yaml
   AUTH_BCRYPT_HASH: "$$2a$$10$$1GQDDcqXtI7DmiPjJSUgXeLXDSNovtlKA6OMSppfU.lbfVODVmopC"
   ```
+
+---
+
+## 🔑 Generate Generation (Docker)
+```bash
+docker run --rm node:20-alpine node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 ---
 
