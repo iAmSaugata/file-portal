@@ -144,7 +144,7 @@ async function addFiles(files){
       <div class="bar"><div></div></div>
       <div class="queue-meta"><span class="pct">0%</span> • <span class="spd">0 KB/s</span></div>
       <div class="q-links" style="margin-top:6px; display:none; gap:6px">
-        <button class="btn btn-muted small copylink">Copy Link</button>
+        <button class="btn btn-muted small copylink">Copy Direct Link</button>
       </div>`;
     const obj = { file, el: row, lastT: Date.now(), lastLoaded:0, xhr:null, hash:h };
     row.querySelector('.x').onclick = ()=>{ if (active.has(obj)) return; q = q.filter(e => e !== obj); queue.removeChild(row); };
