@@ -72,6 +72,10 @@ Built for reverse proxies (Cloudflare), supports tokenized download links, paral
 - **Auth:** One bcrypt-protected password; keep the hash secret and rotate periodically.
 - **Cookies:** Signed, `httpOnly`, `sameSite=lax`.
 - **CSP:** Helmet with conservative defaults + allowances for inline `style`/`script` where needed, and `worker-src blob:`.
+- SESSION_SECRET
+  - **What:** A long, random secret used to **sign session cookies** so they can't be tampered with.
+  - **Why:** Required for secure logins; without it, cookies aren’t trusted.
+  - **How long:** At least 32 bytes (≈ 64 hex chars) is recommended.
 
 ---
 
@@ -84,6 +88,12 @@ docker run --rm -e PASS='YOUR-PASSWORD' -e COST=10 node:20-alpine sh -lc '
   export NODE_PATH=$(npm root -g) &&
   node -e "require(\"module\").Module._initPaths();const b=require(\"bcryptjs\");const h=b.hashSync(process.env.PASS,Number(process.env.COST)||10);console.log(h)"
 '
+```
+
+## 🔑 Generate Generation (Docker)
+```bash
+docker run --rm node:20-alpine node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+
 ```
 
 - Put the output into `AUTH_BCRYPT_HASH`.
