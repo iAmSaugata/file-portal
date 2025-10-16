@@ -1,18 +1,14 @@
 # File Management Portal — v10.1
 
-This version builds on v10 and adds:
-- **Parallel uploads** controlled by `PARALLEL_UPLOADS` env (default 2).
-- **Done** button is disabled while any upload is in progress and re-enabled when all finish.
+Adds **parallel uploads** and **Done lock** during active uploads.
+- Configure concurrency via `PARALLEL_UPLOADS` (default **2**).
+- While any upload is in progress, the **Done** button is **disabled** and re-enabled when all complete or canceled.
 
-All other behavior remains unchanged from v10.
+No other upload page UI/style changes were made.
 
 ## Deploy
 ```bash
 unzip file-portal-v10.1.zip
-cd file-portal-v10.1
+cd file-portal-v10_1
 docker compose up -d --build
 ```
-
-## Environment
-- `PARALLEL_UPLOADS` — integer, max number of concurrent uploads (default 2).
-- Other envs are identical to v10.

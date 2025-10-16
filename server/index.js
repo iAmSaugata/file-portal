@@ -103,7 +103,7 @@ app.get('/dashboard', requireAuth, (req,res)=>{ const files = listFiles.all(); r
 const uploadDir = path.join(process.cwd(), 'uploads'); fs.mkdirSync(uploadDir, { recursive: true });
 const multerUpload = multer({ storage: multer.diskStorage({ destination: (req,f,cb)=>cb(null,uploadDir), filename:(req,f,cb)=>cb(null, nanoId()+path.extname(f.originalname||'')) }), limits: { fileSize: MAX_UPLOAD_MB*1024*1024 } });
 
-app.get('/upload', requireAuth, (req,res)=> res.render('upload',{ disabled:false, parallelUploads: PARALLEL_UPLOADS }));
+app.get('/upload', requireAuth, (req,res)=> res.render('upload',{ disabled:false, parallel: PARALLEL_UPLOADS }));
 app.post('/api/upload', requireAuth, multerUpload.array('files'), (req,res)=>{
   const comments = (req.body.comments || '').toString().slice(0,1000);
   const now = new Date().toISOString();
