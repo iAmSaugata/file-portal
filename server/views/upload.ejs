@@ -6,6 +6,7 @@
   <title>Upload • <%= brandTitle %></title>
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml"/>
   <link rel="stylesheet" href="/static/styles.css"/>
+  <% if (brandPrimary) { %><style>:root{ --primary:<%= brandPrimary %>; }</style><% } %>
   <style>
     .upload-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:18px; }
     @media (max-width: 860px){ .upload-grid{ grid-template-columns: 1fr; } }
@@ -22,6 +23,18 @@
   </style>
 </head>
 <body>
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="topbar-title">
+        <% if (brandLogo) { %><img src="<%= brandLogo %>" alt="logo"/><% } %>
+        <span><%= brandTitle %></span>
+      </div>
+      <div>
+        <a href="/logout"><button class="btn btn-signout small-compact">Sign Out</button></a>
+      </div>
+    </div>
+  </div>
+
   <div class="container">
     <div class="card" style="max-width: 980px; position: relative;">
       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px">
@@ -56,13 +69,12 @@
           <div id="hint" class="small" style="margin-top:8px; color:#6b7280">Uploads begin as soon as you add files.</div>
         </div>
       </div>
+
+      <div class="footer"><b><%= footerText %></b></div>
     </div>
   </div>
 
 <script>
-const CONCURRENCY = Number(<%= typeof concurrency !== 'undefined' ? concurrency : 3 %>) || 3;
-
-/* Toasts */
 function toast(msg, type='info', ms=8000){
   let wrap = document.querySelector('.toast-wrap');
   if(!wrap){ wrap=document.createElement('div'); wrap.className='toast-wrap'; document.body.appendChild(wrap); }
@@ -72,11 +84,11 @@ function toast(msg, type='info', ms=8000){
   setTimeout(()=>{ try{ wrap.removeChild(t); }catch{} }, ms);
 }
 
-// Bind Done
-const btnDone = document.getElementById('btnDone');
-if (btnDone){ btnDone.addEventListener('click', ()=>{ if (!uploading) window.location.assign('/dashboard'); }); }
+document.addEventListener('DOMContentLoaded', ()=>{
+  const done = document.getElementById('btnDone');
+  if (done){ done.addEventListener('click', ()=>{ window.location.assign('/dashboard'); }); }
+});
 
-// Worker for SHA-256
 const workerCode = () => {
   self.onmessage = async (e)=>{
     const file = e.data;
@@ -99,9 +111,8 @@ const btnCancel = document.getElementById('btnCancel');
 const queue = document.getElementById('queue');
 const commentsEl = document.getElementById('comments');
 
-let q = []; // queue
+let q = [];
 let uploading = false;
-let active = 0;
 const uploadedNames = new Set();
 const uploadedHashes = new Set();
 
@@ -144,33 +155,19 @@ async function addFiles(files){
 
 btnCancel.onclick = ()=>{
   if (!uploading) return;
-  // Abort one active upload (first found)
-  const cur = [...document.querySelectorAll('.queue-item')]
-    .map(el => q.find(o => o.el===el) || null)
-    .filter(Boolean)
-    .find(o => o && o.xhr);
+  const cur = q.find(x=>x.xhr);
   if (cur && cur.xhr){ cur.xhr.abort(); toast('Upload canceled','err', 8000); }
 };
 
-function setDisabled(d){
-  btnBrowse.disabled = d;
-  picker.disabled = d;
-  if (btnDone) btnDone.disabled = d;
-  if (d) queue.classList.add('ghost'); else queue.classList.remove('ghost');
-}
-
 async function startUploads(){
-  if (uploading) return;
-  if (!q.length) return;
-  uploading = true;
-  setDisabled(true);
-  btnCancel.disabled = false;
-
-  function startOne(item){
-    active++;
+  if (uploading || !q.length) return;
+  uploading = true; setDisabled(true); btnCancel.disabled = false;
+  while (q.length){
+    const item = q.shift();
     const fd = new FormData();
     fd.append('files', item.file);
     fd.append('comments', commentsEl.value || '');
+
     const xhr = new XMLHttpRequest(); item.xhr = xhr;
     const bar = item.el.querySelector('.bar > div');
     const pct = item.el.querySelector('.pct');
@@ -187,47 +184,45 @@ async function startUploads(){
         if (dt > 0.2){ const speed = (e.loaded - item.lastLoaded) / dt; spd.textContent = human(speed) + '/s'; item.lastT = now; item.lastLoaded = e.loaded; }
       }
     };
-    xhr.onreadystatechange = async ()=>{
-      if (xhr.readyState===4){
-        item.xhr = null;
-        if (xhr.status>=200 && xhr.status<300){
-          try {
-            const j = JSON.parse(xhr.responseText);
-            if (j.ok && j.saved && j.saved.length){
-              const id = j.saved[0].id;
-              uploadedNames.add(item.file.name);
-              if (item.hash) uploadedHashes.add(item.hash);
-              links.style.display='flex';
-              copyBtn.onclick = async ()=>{
-                const r = await fetch('/api/getlink',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id })});
-                const g = await r.json();
-                if (g.ok){ await navigator.clipboard.writeText(g.directUrl); toast('Download Link Copied for ' + item.file.name, 'ok', 8000); }
-              };
-            }
-          }catch{ toast('Failed','err', 8000); }
-        } else {
-          spd.textContent = 'failed'; let msg = 'Upload failed';
-          try { const err = JSON.parse(xhr.responseText); if (err && err.error) msg = 'Upload failed: ' + err.error; } catch {}
-          toast(msg,'err', 8000);
+    await new Promise((resolve)=>{
+      xhr.onreadystatechange = async ()=>{
+        if (xhr.readyState===4){
+          item.xhr = null;
+          if (xhr.status>=200 && xhr.status<300){
+            try {
+              const j = JSON.parse(xhr.responseText);
+              if (j.ok && j.saved && j.saved.length){
+                const id = j.saved[0].id;
+                uploadedNames.add(item.file.name);
+                if (item.hash) uploadedHashes.add(item.hash);
+                links.style.display='flex';
+                copyBtn.onclick = async ()=>{
+                  const r = await fetch('/api/getlink',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id })});
+                  const g = await r.json();
+                  if (g.ok){ await navigator.clipboard.writeText(g.directUrl); toast('Download Link Copied for ' + item.file.name, 'ok', 8000); }
+                };
+              }
+            }catch{ toast('Failed','err', 8000); }
+          } else {
+            spd.textContent = 'failed'; let msg = 'Upload failed';
+            try { const err = JSON.parse(xhr.responseText); if (err && err.error) msg = 'Upload failed: ' + err.error; } catch {}
+            toast(msg,'err', 8000);
+          }
+          resolve(true);
         }
-        active--;
-        pump();
-      }
-    };
-    xhr.send(fd);
+      };
+      xhr.send(fd);
+    });
   }
+  uploading = false; setDisabled(false); btnCancel.disabled = true;
+}
 
-  function pump(){
-    while (active < CONCURRENCY && q.length){
-      startOne(q.shift());
-    }
-    if (active === 0){
-      uploading = false;
-      setDisabled(false);
-      btnCancel.disabled = true;
-    }
-  }
-  pump();
+function setDisabled(d){
+  const btnBrowse = document.getElementById('btnBrowse');
+  const picker = document.getElementById('picker');
+  if (btnBrowse) btnBrowse.disabled = d;
+  if (picker) picker.disabled = d;
+  if (d) queue.classList.add('ghost'); else queue.classList.remove('ghost');
 }
 </script>
 </body>

@@ -26,7 +26,6 @@ const SESSION_SECRET = process.env.SESSION_SECRET || 'change-me-please';
 const AUTH_BCRYPT_HASH = process.env.AUTH_BCRYPT_HASH || '';
 const MAX_UPLOAD_MB = parseInt(process.env.MAX_UPLOAD_MB || '200', 10);
 const BASE_URL = (process.env.BASE_URL || '').trim();
-const UPLOAD_CONCURRENCY = parseInt(process.env.UPLOAD_CONCURRENCY || '3', 10);
 
 // ---- Trust proxy (Cloudflare-only default) ----
 const TRUST_PROXY = process.env.TRUST_PROXY ?? '1';
@@ -103,7 +102,7 @@ app.get('/dashboard', requireAuth, (req,res)=>{ const files = listFiles.all(); r
 const uploadDir = path.join(process.cwd(), 'uploads'); fs.mkdirSync(uploadDir, { recursive: true });
 const multerUpload = multer({ storage: multer.diskStorage({ destination: (req,f,cb)=>cb(null,uploadDir), filename:(req,f,cb)=>cb(null, nanoId()+path.extname(f.originalname||'')) }), limits: { fileSize: MAX_UPLOAD_MB*1024*1024 } });
 
-app.get('/upload', requireAuth, (req,res)=> res.render('upload',{ disabled:false, concurrency: UPLOAD_CONCURRENCY }));
+app.get('/upload', requireAuth, (req,res)=> res.render('upload',{ disabled:false }));
 app.post('/api/upload', requireAuth, multerUpload.array('files'), (req,res)=>{
   const comments = (req.body.comments || '').toString().slice(0,1000);
   const now = new Date().toISOString();
