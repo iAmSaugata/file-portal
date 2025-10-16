@@ -98,9 +98,18 @@ docker run --rm -e PASS='YOUR-PASSWORD' -e COST=10 node:20-alpine sh -lc '
 
 ---
 
-## 🔑 Generate Generation (Docker)
+## 🔑 Generate SESSION_SECRET (Docker)
+
+Use this **Docker-only** command to generate SESSION_SECRET
 ```bash
-docker run --rm node:20-alpine node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+docker run --rm node:20-alpine node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"\
+```
+
+- Put the output into `SESSION_SECRET`.
+- **docker-compose interpolation tip**: `$` must be escaped as `$$` in YAML. Example:
+  ```yaml
+  SESSION_SECRET: "280737c2a36f0fe5d774497618c0e8664783c1d2155b6b24a712361c984970d8"
+  ```
 
 ---
 
