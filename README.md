@@ -50,7 +50,7 @@ Built for reverse proxies (Cloudflare), supports tokenized download links, paral
 | `PORT` | `8080` | Container port the server binds to. |
 | `SESSION_SECRET` | `change-me-please` | Cookie signing secret. |
 | `AUTH_BCRYPT_HASH` | _(empty)_ | Bcrypt hash of your admin password (see **Hash Generation**). If empty, login is disabled. |
-| `MAX_UPLOAD_MB` | `200` | Per-file upload size cap. |
+| `MAX_UPLOAD_MB` | `100` | Per-file upload size cap. |
 | `BASE_URL` | _(auto from request)_ | Public base URL (e.g., `https://files.example.com`). Needed behind proxies so links point to the correct origin. |
 | `BRAND_TITLE` | `File Management` | Header title. |
 | `BRAND_LOGO_URL` | _(empty)_ | Optional logo URL for header. |
