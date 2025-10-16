@@ -7,19 +7,57 @@
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml"/>
   <link rel="stylesheet" href="/static/styles.css"/>
   <% if (brandPrimary) { %><style>:root{ --primary:<%= brandPrimary %>; }</style><% } %>
-  <style>
-    .inline-actions{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
-    /* stack boxes vertically and keep them inside the card */
-    .code-col{ display:flex; flex-direction:column; gap:12px; margin-top:12px; }
-    .code-card{ background:#f8fbff; border:1px solid #e5e7eb; border-radius:12px; padding:10px; text-align:left; }
-    .code-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; font-weight:700; }
+	<style>
+	  /* ChatGPT-like code block */
+	  .gpt-code{
+		background:#0f172a;          /* slate-900 */
+		border:1px solid #1f2a44;     /* faint border */
+		border-radius:12px;
+		overflow:hidden;
+		box-shadow:0 6px 16px rgba(0,0,0,.25);
+	  }
+	  .gpt-code .gpt-head{
+		display:flex;align-items:center;justify-content:space-between;
+		padding:8px 10px;
+		background:#111827;           /* slightly lighter header */
+		color:#cbd5e1;
+		border-bottom:1px solid #1f2937;
+		font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+		font-size:12px;
+	  }
+	  .gpt-code .badge{
+		background:#1f2937;           /* slate-800 */
+		color:#93c5fd;                /* light blue label */
+		border:1px solid #334155;     /* slate-700 */
+		padding:2px 8px;
+		border-radius:6px;
+		font-weight:700;
+	  }
+	  .gpt-code .copy{
+		background:transparent;
+		border:1px solid #334155;
+		color:#cbd5e1;
+		border-radius:8px;
+		padding:4px 8px;
+		cursor:pointer;
+	  }
+	  .gpt-code .copy:hover{ background:#1f2937; }
+	  .gpt-code pre{
+		margin:0; padding:12px 14px;
+		color:#e5e7eb;
+		max-height:180px;             /* vertical scroll inside card */
+		overflow:auto;                /* vertical + horizontal if needed */
+	  }
+	  .gpt-code code{
+		white-space:pre-wrap;         /* wraps long bits but keeps formatting */
+		word-break:break-word;
+		font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+		font-size:13px;
+	  }
 
-    /* fit inside card; prefer vertical scrolling for long commands */
-    pre{ margin:0; max-height:140px; overflow-y:auto; }
-    code{ white-space: pre-wrap; word-break: break-all; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 13px; }
-
-    .file-meta{ color:#6b7280; font-size: 13px; margin-top:4px; }
-  </style>
+	  /* keep your layout wrapper for vertical stacking */
+	  .code-col{ display:flex; flex-direction:column; gap:12px; margin-top:12px; }
+	</style>
 </head>
 <body>
   <div class="container">
@@ -36,21 +74,23 @@
         </div>
 
         <!-- One box per row (Windows, Linux), vertically stacked -->
-        <div class="code-col">
-          <div class="code-card">
-            <div class="code-head">Windows
-              <button class="btn btn-muted small" id="copyWin" type="button">Copy</button>
-            </div>
-            <pre><code id="cmdWin"></code></pre>
-          </div>
+		<div class="code-col">
+		  <div class="gpt-code">
+			<div class="gpt-head">
+			  <span class="badge">Windows</span>
+			  <button class="copy" id="copyWin" type="button">Copy</button>
+			</div>
+			<pre><code id="cmdWin"></code></pre>
+		  </div>
 
-          <div class="code-card">
-            <div class="code-head">Linux
-              <button class="btn btn-muted small" id="copyNix" type="button">Copy</button>
-            </div>
-            <pre><code id="cmdNix"></code></pre>
-          </div>
-        </div>
+		  <div class="gpt-code">
+			<div class="gpt-head">
+			  <span class="badge">Linux</span>
+			  <button class="copy" id="copyNix" type="button">Copy</button>
+			</div>
+			<pre><code id="cmdNix"></code></pre>
+		  </div>
+		</div>        
       </div>
       <div class="footer"><b><%= footerText %></b></div>
     </div>
