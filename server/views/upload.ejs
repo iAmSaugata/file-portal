@@ -7,22 +7,23 @@
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml"/>
   <link rel="stylesheet" href="/static/styles.css"/>
   <% if (brandPrimary) { %><style>:root{ --primary:<%= brandPrimary %>; }</style><% } %>
+  <script defer src="/static/theme.js"></script>
   <style>
     .upload-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:18px; }
     @media (max-width: 860px){ .upload-grid{ grid-template-columns: 1fr; } }
-    .queue-item{ background:#fff; border:1px solid #eef0f5; border-radius:12px; padding:10px 12px; margin:10px 0; }
+    .queue-item{ background:var(--queue-bg); border:1px solid var(--queue-border); border-radius:12px; padding:10px 12px; margin:10px 0; }
     .queue-h{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
     .queue-name{ font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width: 260px; }
-    .queue-meta{ font-size:12px; color:#6b7280; }
+    .queue-meta{ font-size:12px; color:var(--muted); }
     .q-actions{ display:flex; gap:8px; }
-    .x{ cursor:pointer; color:#b91c1c; }
-    .bar{ height:10px; background:#e5e7eb; border-radius:8px; overflow:hidden; margin-top:8px; }
-    .bar > div{ height:100%; width:0%; background: linear-gradient(90deg,#60a5fa,#93c5fd); transition: width 0.1s linear; }
+    .x{ cursor:pointer; color:var(--danger); }
+    .bar{ height:10px; background:var(--bar-bg); border-radius:8px; overflow:hidden; margin-top:8px; }
+    .bar > div{ height:100%; width:0%; background: linear-gradient(90deg,var(--btn-primary),var(--btn-blue)); transition: width 0.1s linear; }
     .two-btns{ display:flex; gap:10px; }
     .ghost{ opacity:.5; pointer-events:none; }
   </style>
 </head>
-<body data-upl-conc="<%= uploadConcurrency %>">
+<body data-theme="<%= theme === 'dark' ? 'dark' : 'light' %>" data-upl-conc="<%= uploadConcurrency %>">
   <div class="topbar">
     <div class="topbar-inner">
       <div class="topbar-title">
@@ -55,7 +56,7 @@
           </div>
           <div style="margin-top:12px">
             <label class="small" for="comments">Comments (optional)</label>
-            <textarea id="comments" placeholder="Optional comments" style="width:100%; min-height:80px; padding:10px; border:1px solid #d1d5db; border-radius:10px"></textarea>
+            <textarea id="comments" placeholder="Optional comments" style="width:100%; min-height:80px; padding:10px; border:1px solid var(--input-border); border-radius:10px; background:var(--input-bg); color:var(--input-text)"></textarea>
           </div>
         </div>
 
@@ -66,13 +67,13 @@
             <button id="btnStart" class="btn btn-primary" style="display:none">Upload</button>
             <button id="btnCancel" class="btn btn-muted" disabled>Cancel</button>
           </div>
-          <div id="hint" class="small" style="margin-top:8px; color:#6b7280">Uploads begin as soon as you add files.</div>
-        </div>
+          <div id="hint" class="small" style="margin-top:8px; color:var(--muted)">Uploads begin as soon as you add files.</div>
       </div>
-
-      <div class="footer"><b><%= footerText %></b></div>
     </div>
+
+    <div class="footer"><b><%= footerText %></b><button class="theme-toggle" type="button">Toggle Theme</button></div>
   </div>
+</div>
 
 <script>
 function toast(msg, type='info', ms=7000){
