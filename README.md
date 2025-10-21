@@ -53,7 +53,6 @@ Built for reverse proxies (Cloudflare), supports tokenized download links, paral
 | `COOKIE_SECURE` | `auto` | Force session cookie `secure` flag (`true` by default when `NODE_ENV=production`). |
 | `AUTH_BCRYPT_HASH` | _(empty)_ | Bcrypt hash of your admin password (see **Hash Generation**). If empty, login is disabled. |
 | `MAX_UPLOAD_MB` | `200` | Per-file upload size cap. |
-| `MAX_FILES_PER_UPLOAD` | `10` | Maximum number of files accepted per upload request. |
 | `BASE_URL` | _(auto from request)_ | Public base URL (e.g., `https://files.example.com`). Needed behind proxies so links point to the correct origin. |
 | `RATE_LIMIT_WINDOW_MS` | `900000` | Rate limit window (ms). |
 | `RATE_LIMIT_MAX` | `200` | Max requests per window for `/api/*`. |

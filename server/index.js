@@ -31,7 +31,6 @@ const AUTH_BCRYPT_HASH = process.env.AUTH_BCRYPT_HASH || '';
 const MAX_UPLOAD_MB = parseInt(process.env.MAX_UPLOAD_MB || '200', 10);
 const BASE_URL = (process.env.BASE_URL || '').trim();
 const UPLOAD_CONCURRENCY = parseInt(process.env.UPLOAD_CONCURRENCY || '3', 10);
-const MAX_FILES_PER_UPLOAD = parseInt(process.env.MAX_FILES_PER_UPLOAD || '10', 10);
 const COOKIE_SECURE = process.env.COOKIE_SECURE === 'true' ||
   (process.env.COOKIE_SECURE === undefined && process.env.NODE_ENV === 'production');
 
@@ -46,8 +45,6 @@ if (BRAND_LOGO_URL) {
     console.warn('BRAND_LOGO_URL is not a valid absolute URL; it will be ignored for CSP allowances.');
   }
 }
-
-const effectiveMaxFiles = Number.isFinite(MAX_FILES_PER_UPLOAD) && MAX_FILES_PER_UPLOAD > 0 ? MAX_FILES_PER_UPLOAD : 10;
 
 // Trust Cloudflare hop by default
 const TRUST_PROXY = process.env.TRUST_PROXY ?? '1';
@@ -122,16 +119,13 @@ app.get('/logout', (req,res)=>{ res.clearCookie('sess', { path:'/', sameSite:'la
 app.get('/dashboard', requireAuth, (req,res)=>{ const files = listFiles.all(); res.render('dashboard', { files, baseUrl: BASE_URL }); });
 
 const uploadDir = path.join(process.cwd(), 'uploads'); fs.mkdirSync(uploadDir, { recursive: true });
-const multerUpload = multer({ storage: multer.diskStorage({ destination: (req,f,cb)=>cb(null,uploadDir), filename:(req,f,cb)=>cb(null, nanoId()+path.extname(f.originalname||'')) }), limits: { fileSize: MAX_UPLOAD_MB*1024*1024, files: effectiveMaxFiles } });
+const multerUpload = multer({ storage: multer.diskStorage({ destination: (req,f,cb)=>cb(null,uploadDir), filename:(req,f,cb)=>cb(null, nanoId()+path.extname(f.originalname||'')) }), limits: { fileSize: MAX_UPLOAD_MB*1024*1024 } });
 const uploadMiddleware = multerUpload.array('files');
 
 app.get('/upload', requireAuth, (req,res)=> res.render('upload',{ disabled:false, uploadConcurrency: UPLOAD_CONCURRENCY }));
 app.post('/api/upload', requireAuth, (req,res,next)=>{
   uploadMiddleware(req,res,(err)=>{
     if (err){
-      if (err.code === 'LIMIT_FILE_COUNT') {
-        return res.status(400).json({ ok:false, error:`Too many files uploaded. Maximum allowed per request is ${effectiveMaxFiles}.` });
-      }
       if (err.code === 'LIMIT_FILE_SIZE') {
         return res.status(400).json({ ok:false, error:`File too large. Maximum allowed per file is ${MAX_UPLOAD_MB} MB.` });
       }
