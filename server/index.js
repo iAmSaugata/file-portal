@@ -22,11 +22,32 @@ const DOWNLOAD_RATE_LIMIT_MAX = parseInt(process.env.DOWNLOAD_RATE_LIMIT_MAX || 
 const RATE_LIMIT_WINDOW_MS = parseInt(process.env.RATE_LIMIT_WINDOW_MS || String(15*60*1000), 10);
 const LINK_TTL_MS = parseInt(process.env.LINK_TTL_MS || String(24*60*60*1000), 10);
 
-const SESSION_SECRET = process.env.SESSION_SECRET || 'change-me-please';
+const SESSION_SECRET = process.env.SESSION_SECRET;
+if (!SESSION_SECRET || SESSION_SECRET.length < 32) {
+  console.error('SESSION_SECRET must be set to a strong value (>= 32 characters).');
+  process.exit(1);
+}
 const AUTH_BCRYPT_HASH = process.env.AUTH_BCRYPT_HASH || '';
 const MAX_UPLOAD_MB = parseInt(process.env.MAX_UPLOAD_MB || '200', 10);
 const BASE_URL = (process.env.BASE_URL || '').trim();
 const UPLOAD_CONCURRENCY = parseInt(process.env.UPLOAD_CONCURRENCY || '3', 10);
+const MAX_FILES_PER_UPLOAD = parseInt(process.env.MAX_FILES_PER_UPLOAD || '10', 10);
+const COOKIE_SECURE = process.env.COOKIE_SECURE === 'true' ||
+  (process.env.COOKIE_SECURE === undefined && process.env.NODE_ENV === 'production');
+
+const cspImageSources = ["'self'", 'data:'];
+if (BRAND_LOGO_URL) {
+  try {
+    const { origin } = new URL(BRAND_LOGO_URL);
+    if (origin && !cspImageSources.includes(origin)) {
+      cspImageSources.push(origin);
+    }
+  } catch (err) {
+    console.warn('BRAND_LOGO_URL is not a valid absolute URL; it will be ignored for CSP allowances.');
+  }
+}
+
+const effectiveMaxFiles = Number.isFinite(MAX_FILES_PER_UPLOAD) && MAX_FILES_PER_UPLOAD > 0 ? MAX_FILES_PER_UPLOAD : 10;
 
 // Trust Cloudflare hop by default
 const TRUST_PROXY = process.env.TRUST_PROXY ?? '1';
@@ -46,7 +67,7 @@ app.use(helmet({
       "script-src": ["'self'", "'unsafe-inline'"],
       "style-src": ["'self'","'unsafe-inline'"],
       "worker-src": ["'self'", "blob:"],
-      "img-src": ["'self'", "data:"],
+      "img-src": cspImageSources,
       "connect-src": ["'self'"]
     }
   }
@@ -93,18 +114,32 @@ app.post('/login', loginLimiter, (req,res)=>{
   if (!AUTH_BCRYPT_HASH) return res.redirect('/dashboard');
   const { password } = req.body || {};
   const ok = password && bcrypt.compareSync(password, AUTH_BCRYPT_HASH);
-  if (ok){ res.cookie('sess','ok',{signed:true,httpOnly:true,sameSite:'lax',maxAge:1000*60*60*24*30}); return res.redirect('/dashboard'); }
+  if (ok){ res.cookie('sess','ok',{signed:true,httpOnly:true,sameSite:'lax',secure:COOKIE_SECURE,maxAge:1000*60*60*24*30}); return res.redirect('/dashboard'); }
   return res.status(401).render('login',{ error:'Invalid password. Please try again.' });
 });
-app.get('/logout', (req,res)=>{ res.clearCookie('sess'); res.redirect('/login'); });
+app.get('/logout', (req,res)=>{ res.clearCookie('sess', { path:'/', sameSite:'lax', secure:COOKIE_SECURE, httpOnly:true }); res.redirect('/login'); });
 
 app.get('/dashboard', requireAuth, (req,res)=>{ const files = listFiles.all(); res.render('dashboard', { files, baseUrl: BASE_URL }); });
 
 const uploadDir = path.join(process.cwd(), 'uploads'); fs.mkdirSync(uploadDir, { recursive: true });
-const multerUpload = multer({ storage: multer.diskStorage({ destination: (req,f,cb)=>cb(null,uploadDir), filename:(req,f,cb)=>cb(null, nanoId()+path.extname(f.originalname||'')) }), limits: { fileSize: MAX_UPLOAD_MB*1024*1024 } });
+const multerUpload = multer({ storage: multer.diskStorage({ destination: (req,f,cb)=>cb(null,uploadDir), filename:(req,f,cb)=>cb(null, nanoId()+path.extname(f.originalname||'')) }), limits: { fileSize: MAX_UPLOAD_MB*1024*1024, files: effectiveMaxFiles } });
+const uploadMiddleware = multerUpload.array('files');
 
 app.get('/upload', requireAuth, (req,res)=> res.render('upload',{ disabled:false, uploadConcurrency: UPLOAD_CONCURRENCY }));
-app.post('/api/upload', requireAuth, multerUpload.array('files'), (req,res)=>{
+app.post('/api/upload', requireAuth, (req,res,next)=>{
+  uploadMiddleware(req,res,(err)=>{
+    if (err){
+      if (err.code === 'LIMIT_FILE_COUNT') {
+        return res.status(400).json({ ok:false, error:`Too many files uploaded. Maximum allowed per request is ${effectiveMaxFiles}.` });
+      }
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ ok:false, error:`File too large. Maximum allowed per file is ${MAX_UPLOAD_MB} MB.` });
+      }
+      return res.status(400).json({ ok:false, error:'Upload failed. Please try again.' });
+    }
+    next();
+  });
+}, (req,res)=>{
   const comments = (req.body.comments || '').toString().slice(0,1000);
   const now = new Date().toISOString();
   const saved = [];
