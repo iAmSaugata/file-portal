@@ -2,6 +2,13 @@
   const COOKIE = 'theme';
   const MAX_AGE = 60 * 60 * 24 * 365; // one year
 
+  const body = document.body;
+  if (!body){
+    return;
+  }
+
+  const toggles = Array.from(document.querySelectorAll('.theme-toggle'));
+
   function readCookie(name){
     const pairs = document.cookie ? document.cookie.split(';') : [];
     for (const pair of pairs){
@@ -23,39 +30,42 @@
 
   function updateButtons(theme){
     const isDark = theme === 'dark';
-    document.querySelectorAll('.theme-toggle').forEach(btn => {
-      const label = isDark ? 'Disable Dark Theme' : 'Enable Dark Theme';
+    const label = isDark ? 'Disable Dark Theme' : 'Enable Dark Theme';
+    toggles.forEach(btn => {
       btn.textContent = label;
       btn.setAttribute('aria-pressed', isDark ? 'true' : 'false');
       btn.setAttribute('aria-label', label);
     });
   }
 
-  function applyTheme(next){
+  function applyTheme(next, { persist = true } = {}){
     const theme = next === 'dark' ? 'dark' : 'light';
-    document.body.dataset.theme = theme;
-    updateButtons(theme);
-    writeCookie(theme);
-  }
-
-  function detectInitial(){
-    const fromCookie = readCookie(COOKIE).toLowerCase();
-    if (fromCookie === 'dark' || fromCookie === 'light'){
-      return fromCookie;
+    const current = body.dataset.theme === 'dark' ? 'dark' : 'light';
+    if (theme === current){
+      updateButtons(theme);
+      return;
     }
-    return document.body.dataset.theme === 'dark' ? 'dark' : 'light';
+    body.dataset.theme = theme;
+    updateButtons(theme);
+    if (persist){
+      writeCookie(theme);
+    }
   }
 
-  document.addEventListener('DOMContentLoaded', () => {
-    const initial = detectInitial();
-    applyTheme(initial);
+  const fromCookie = readCookie(COOKIE).toLowerCase();
+  if (fromCookie === 'dark' || fromCookie === 'light'){
+    applyTheme(fromCookie, { persist: false });
+  } else {
+    updateButtons(body.dataset.theme === 'dark' ? 'dark' : 'light');
+  }
 
-    document.querySelectorAll('.theme-toggle').forEach(btn => {
+  if (toggles.length){
+    toggles.forEach(btn => {
       btn.addEventListener('click', () => {
-        const current = document.body.dataset.theme === 'dark' ? 'dark' : 'light';
+        const current = body.dataset.theme === 'dark' ? 'dark' : 'light';
         const next = current === 'dark' ? 'light' : 'dark';
         applyTheme(next);
       });
     });
-  });
+  }
 })();
