@@ -7,9 +7,10 @@
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml"/>
   <link rel="stylesheet" href="/static/styles.css"/>
   <% if (brandPrimary) { %><style>:root{ --primary:<%= brandPrimary %>; }</style><% } %>
+  <script defer src="/static/theme.js"></script>
   <script defer src="/static/app.js"></script>
 </head>
-<body>
+<body data-theme="<%= theme === 'dark' ? 'dark' : 'light' %>">
   <div class="topbar">
     <div class="topbar-inner">
       <div class="topbar-title">
@@ -25,7 +26,7 @@
   <div class="container">
     <div class="card" style="max-width: 1100px;">
       <div class="search-right" style="margin:6px 0;">
-        <input id="search" class="small-compact" type="text" placeholder="Search name or comments..." style="padding:6px 8px;border:1px solid #d1d5db;border-radius:8px">
+        <input id="search" class="small-compact" type="text" placeholder="Search name or comments..." style="padding:6px 8px;border:1px solid var(--input-border);border-radius:8px;background:var(--input-bg);color:var(--input-text)">
         <button class="btn btn-muted small-compact" onclick="clearSearch()">Clear</button>
       </div>
 
@@ -55,12 +56,12 @@
                 <td>
                   <% const showName = f.original_name;
                      const long = showName.length > 60;
-                     const display = long ? (showName.slice(0,60) + '<span style="color:#2563eb">...</span>') : showName; %>
+                     const display = long ? (showName.slice(0,60) + '<span style="color:var(--primary-strong)">...</span>') : showName; %>
                   <div class="filename" title="<%= long ? showName : '' %>" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
                     <span><%- display %></span>
                     <% if (f.comments) { %><span title="<%= f.comments %>">📜</span><% } %>
                   </div>
-                  <div class="small" style="color:#6b7280"><%= new Date(f.uploaded_at).toLocaleString() %></div>
+                  <div class="small" style="color:var(--muted)"><%= new Date(f.uploaded_at).toLocaleString() %></div>
                 </td>
                 <td>
                   <% const kb = Math.round(f.size/1024);
@@ -79,7 +80,7 @@
         </table>
       </div>
 
-      <div class="footer"><b><%= footerText %></b></div>
+      <div class="footer"><b><%= footerText %></b><button class="theme-toggle" type="button">Toggle Theme</button></div>
     </div>
   </div>
 </body>

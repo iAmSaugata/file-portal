@@ -7,47 +7,48 @@
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml"/>
   <link rel="stylesheet" href="/static/styles.css"/>
   <% if (brandPrimary) { %><style>:root{ --primary:<%= brandPrimary %>; }</style><% } %>
-	<style>
-	  /* ChatGPT-like code block */
-	  .gpt-code{
-		background:#7789B0;          /* slate-900 */
-		border:1px solid #1f2a44;     /* faint border */
-		border-radius:12px;
-		overflow:hidden;
-		box-shadow:0 6px 16px rgba(0,0,0,.25);
-	  }
-	  .gpt-code .gpt-head{
-		display:flex;align-items:center;justify-content:space-between;
-		padding:8px 10px;
-		background:#111827;           /* slightly lighter header */
-		color:#cbd5e1;
-		border-bottom:1px solid #1f2937;
-		font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
-		font-size:12px;
-	  }
-	  .gpt-code .badge{
-		background:#1f2937;           /* slate-800 */
-		color:#93c5fd;                /* light blue label */
-		border:1px solid #334155;     /* slate-700 */
-		padding:2px 8px;
-		border-radius:6px;
-		font-weight:700;
-	  }
-	  .gpt-code .copy{
-		background:transparent;
-		border:1px solid #334155;
-		color:#cbd5e1;
-		border-radius:8px;
-		padding:4px 8px;
-		cursor:pointer;
-	  }
-	  .gpt-code .copy:hover{ background:#1f2937; }
-	  .gpt-code pre{
-		margin:0; padding:12px 14px;
-		color:#e5e7eb;
-		max-height:180px;             /* vertical scroll inside card */
-		overflow:auto;                /* vertical + horizontal if needed */
-	  }
+  <script defer src="/static/theme.js"></script>
+        <style>
+          /* ChatGPT-like code block */
+          .gpt-code{
+                background:var(--code-card-bg);
+                border:1px solid var(--code-card-border);
+                border-radius:12px;
+                overflow:hidden;
+                box-shadow:0 6px 16px rgba(0,0,0,.25);
+          }
+          .gpt-code .gpt-head{
+                display:flex;align-items:center;justify-content:space-between;
+                padding:8px 10px;
+                background:var(--code-head-bg);
+                color:var(--code-head-text);
+                border-bottom:1px solid var(--code-head-border);
+                font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+                font-size:12px;
+          }
+          .gpt-code .badge{
+                background:var(--code-badge-bg);
+                color:var(--code-badge-text);
+                border:1px solid var(--code-badge-border);
+                padding:2px 8px;
+                border-radius:6px;
+                font-weight:700;
+          }
+          .gpt-code .copy{
+                background:transparent;
+                border:1px solid var(--code-copy-border);
+                color:var(--code-copy-text);
+                border-radius:8px;
+                padding:4px 8px;
+                cursor:pointer;
+          }
+          .gpt-code .copy:hover{ background:var(--code-copy-hover); }
+          .gpt-code pre{
+                margin:0; padding:12px 14px;
+                color:var(--code-body-text);
+                max-height:180px;             /* vertical scroll inside card */
+                overflow:auto;                /* vertical + horizontal if needed */
+          }
 	  .gpt-code code{
 		white-space:pre-wrap;         /* wraps long bits but keeps formatting */
 		word-break:break-word;
@@ -59,7 +60,7 @@
 	  .code-col{ display:flex; flex-direction:column; gap:12px; margin-top:12px; }
 	</style>
 </head>
-<body>
+<body data-theme="<%= theme === 'dark' ? 'dark' : 'light' %>">
   <div class="container">
     <div class="card" style="max-width: 720px; text-align:center;">
       <h2 style="margin-top:0">File Is Ready To Download</h2>
@@ -68,10 +69,10 @@
         <div class="file-meta" id="filesize"></div>
 
         <!-- Only Copy + Share + Close -->
-		<div clss="inline-actions" style="margin:10px 0 8px">
-		  <button class="btn btn-blue" id="btnCopy"  type="button">Copy</button>
-		  <button class="btn btn-blue" id="btnShare" type="button">Share</button>
-		  <button class="btn btn-danger" id="btnClose" type="button">Close</button>
+                <div class="inline-actions" style="margin:10px 0 8px">
+                  <button class="btn btn-blue" id="btnCopy"  type="button">Copy</button>
+                  <button class="btn btn-blue" id="btnShare" type="button">Share</button>
+                  <button class="btn btn-danger" id="btnClose" type="button">Close</button>
 		</div>
 
         <!-- One box per row (Windows, Linux), vertically stacked -->
@@ -93,7 +94,7 @@
 		  </div>
 		</div>        
       </div>
-      <div class="footer"><b><%= footerText %></b></div>
+      <div class="footer"><b><%= footerText %></b><button class="theme-toggle" type="button">Toggle Theme</button></div>
     </div>
   </div>
 

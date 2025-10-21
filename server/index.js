@@ -93,10 +93,12 @@ const downloadLimiter = rateLimit({ windowMs: RATE_LIMIT_WINDOW_MS, max: DOWNLOA
 
 // Branding locals
 app.use((req,res,next)=>{
+  const themeCookie = (req.cookies?.theme || '').toLowerCase();
   res.locals.brandTitle = BRAND_TITLE;
   res.locals.brandLogo = BRAND_LOGO_URL;
   res.locals.footerText = FOOTER_TEXT;
   res.locals.brandPrimary = BRAND_PRIMARY_COLOR;
+  res.locals.theme = themeCookie === 'dark' ? 'dark' : 'light';
   next();
 });
 
