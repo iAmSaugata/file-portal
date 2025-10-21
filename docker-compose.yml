@@ -5,7 +5,7 @@ services:
     container_name: file-portal
     environment:
       - PORT=8080
-      - SESSION_SECRET=${SESSION_SECRET:-change-me-please}
+      - SESSION_SECRET=${SESSION_SECRET:?SESSION_SECRET must be set}
       - AUTH_BCRYPT_HASH=${AUTH_BCRYPT_HASH}
       - MAX_UPLOAD_MB=${MAX_UPLOAD_MB:-200}
       - BASE_URL=${BASE_URL:-}
@@ -14,6 +14,7 @@ services:
       - LINK_TTL_MS=${LINK_TTL_MS:-86400000}
       - TRUST_PROXY=${TRUST_PROXY:-1}
       - UPLOAD_CONCURRENCY=${UPLOAD_CONCURRENCY:-3}
+      - COOKIE_SECURE=${COOKIE_SECURE:-}
     volumes:
       - ./data/uploads:/app/uploads
       - ./data/sqlite:/app/sqlite
