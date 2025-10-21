@@ -12,6 +12,7 @@ Built for reverse proxies (Cloudflare), supports tokenized download links, paral
 - Supports signed cookies (`httpOnly`, `sameSite=lax`) for session persistence.
 - Supports Cloudflare/proxy awareness via Express `trust proxy`.
 - Supports rate limiting for API and download endpoints (configurable caps).
+- Supports configurable per-request file-count limits to guard disk usage.
 - Supports configurable public origin override with `BASE_URL`.
 - Supports drag-and-drop file uploads.
 - Supports traditional “Browse” file selection.
@@ -126,6 +127,7 @@ services:
       SESSION_SECRET: "${SESSION_SECRET:?set a strong secret}"  # must be >= 32 chars
       AUTH_BCRYPT_HASH: "$$2a$$10$$1GQDDcqXtI7DmiPjJSUgXeLXDSNovtlKA6OMSppfU.lbfVODVmopC"
       MAX_UPLOAD_MB: 100
+      MAX_FILES_PER_UPLOAD: 10
       BASE_URL: "https://files.example.com"
       BRAND_TITLE: "File Management"
       FOOTER_TEXT: "Powered by Cloudflare DNS API • © iAmSaugata"
