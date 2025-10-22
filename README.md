@@ -161,6 +161,9 @@ Logon
 File Management
 <img width="975" height="572" alt="image" src="https://github.com/user-attachments/assets/04e41099-48a5-4a03-b355-2940b836f7f9" />
 
+Dile Management Dark
+<img width="1132" height="889" alt="image" src="https://github.com/user-attachments/assets/94d0a0ab-866c-4a50-8cdc-3f862658d418" />
+
 Download Link
 <img width="975" height="688" alt="image" src="https://github.com/user-attachments/assets/e48c1ae9-456c-41b4-bd6b-b0e726146ea5" />
 
