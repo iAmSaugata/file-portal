@@ -12,6 +12,7 @@ Built for reverse proxies (Cloudflare), supports tokenized download links, paral
 - Supports signed cookies (`httpOnly`, `sameSite=lax`) for session persistence.
 - Supports Cloudflare/proxy awareness via Express `trust proxy`.
 - Supports rate limiting for API and download endpoints (configurable caps).
+- Supports configurable per-request file-count limits to guard disk usage.
 - Supports configurable public origin override with `BASE_URL`.
 - Supports drag-and-drop file uploads.
 - Supports traditional “Browse” file selection.
@@ -48,9 +49,10 @@ Built for reverse proxies (Cloudflare), supports tokenized download links, paral
 | Name | Default | Description |
 |---|---|---|
 | `PORT` | `8080` | Container port the server binds to. |
-| `SESSION_SECRET` | `change-me-please` | Cookie signing secret. |
+| `SESSION_SECRET` | _(required)_ | Cookie signing secret (at least 32 characters). |
+| `COOKIE_SECURE` | `auto` | Force session cookie `secure` flag (`true` by default when `NODE_ENV=production`). |
 | `AUTH_BCRYPT_HASH` | _(empty)_ | Bcrypt hash of your admin password (see **Hash Generation**). If empty, login is disabled. |
-| `MAX_UPLOAD_MB` | `100` | Per-file upload size cap. |
+| `MAX_UPLOAD_MB` | `200` | Per-file upload size cap. |
 | `BASE_URL` | _(auto from request)_ | Public base URL (e.g., `https://files.example.com`). Needed behind proxies so links point to the correct origin. |
 | `RATE_LIMIT_WINDOW_MS` | `900000` | Rate limit window (ms). |
 | `RATE_LIMIT_MAX` | `200` | Max requests per window for `/api/*`. |
@@ -61,17 +63,20 @@ Built for reverse proxies (Cloudflare), supports tokenized download links, paral
 
 > **File size display rule**: **MB** if > **500 KB**, else **KB**.
 
+> `COOKIE_SECURE` automatically becomes `true` when `NODE_ENV=production`. Set `COOKIE_SECURE=false` for plain HTTP development environments.
+
 ---
 
 ## 🔒 Security Notes
 
 - **Auth:** One bcrypt-protected password; keep the hash secret and rotate periodically.
-- **Cookies:** Signed, `httpOnly`, `sameSite=lax`.
+- **Cookies:** Signed, `httpOnly`, `sameSite=lax`, and `secure` when `COOKIE_SECURE=true` (or automatically when `NODE_ENV=production`).
 - **CSP:** Helmet with conservative defaults + allowances for inline `style`/`script` where needed, and `worker-src blob:`.
 - SESSION_SECRET
   - **What:** A long, random secret used to **sign session cookies** so they can't be tampered with.
   - **Why:** Required for secure logins; without it, cookies aren’t trusted.
   - **How long:** At least 32 bytes (≈ 64 hex chars) is recommended.
+  - **Required:** The server refuses to start without a strong value.
 
 ---
 
@@ -119,9 +124,10 @@ services:
     container_name: file-portal
     environment:
       PORT: 8080
-      SESSION_SECRET: "change-me-please"
+      SESSION_SECRET: "${SESSION_SECRET:?set a strong secret}"  # must be >= 32 chars
       AUTH_BCRYPT_HASH: "$$2a$$10$$1GQDDcqXtI7DmiPjJSUgXeLXDSNovtlKA6OMSppfU.lbfVODVmopC"
       MAX_UPLOAD_MB: 100
+      MAX_FILES_PER_UPLOAD: 10
       BASE_URL: "https://files.example.com"
       BRAND_TITLE: "File Management"
       FOOTER_TEXT: "Powered by Cloudflare DNS API • © iAmSaugata"
@@ -131,6 +137,7 @@ services:
       LINK_TTL_MS: 86400000   # 24 hours
       TRUST_PROXY: 1          # Cloudflare / any reverse proxy
       UPLOAD_CONCURRENCY: 3
+      COOKIE_SECURE: "true"  # enable when TLS is terminated before the container
     volumes:
       - ./data/uploads:/app/uploads
       - ./data/sqlite:/app/sqlite
@@ -153,6 +160,9 @@ Logon
 
 File Management
 <img width="975" height="572" alt="image" src="https://github.com/user-attachments/assets/04e41099-48a5-4a03-b355-2940b836f7f9" />
+
+Dile Management Dark
+<img width="1132" height="889" alt="image" src="https://github.com/user-attachments/assets/94d0a0ab-866c-4a50-8cdc-3f862658d418" />
 
 Download Link
 <img width="975" height="688" alt="image" src="https://github.com/user-attachments/assets/e48c1ae9-456c-41b4-bd6b-b0e726146ea5" />
